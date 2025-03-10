@@ -44,7 +44,7 @@ The most important aspect of a real-time app is performance. In order to achieve
 - Only keep one socket connection at anytime!
 - From the hook, allow other components to register to events with different callbacks
 - Only update message-related states from callbacks to keep things unidirectional
-- For state management, use zustand as it's intuitive, simple use yet very robust.
+- For state management, use zustand as it's intuitive, simple to use and robust.
 - To persist chat history, use IndexedDB for its performance and scalability 
 - For authentication, use irreversible crypto algorithm (`HmacSHA256`) to encrypt user credentials. Never save user password in clear!
 
