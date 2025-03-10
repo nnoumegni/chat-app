@@ -50,7 +50,7 @@ The most important aspect of a real-time app is performance. In order to achieve
 
 #### Backend
 - Use a hash map to keep track of all connected sockets per user since they can join from different devices
-- Upon disconnect or reconnect, update the list of connected sockets
+- Upon disconnect or reconnect, update the list of user connected sockets
 - When a user creates a chat room, persist the data to a database and immediately join the room from all his connected sockets
 - For scalability, create a separate table for each room chat history instead of having a single and huge table with foreign keys
 
@@ -93,5 +93,3 @@ The ChatApp component component is the main entry point to the App.
 ├── README.md
 └── yarn.lock
 ```
-
-... in progress
