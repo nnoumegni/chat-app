@@ -2,7 +2,7 @@
 import {Header} from "../../components/Header";
 import {SideNav} from "../../components/SideNav";
 import {useCallback, useState} from "react";
-import {useFetchData} from "../../hooks/fetch-data";
+import {useFetchData} from "../../components/ChatApp/api/fetch-data";
 import {PositionTable} from "../../components/Positions/PositionTable";
 
 const Home = () => {

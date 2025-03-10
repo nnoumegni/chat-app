@@ -1,19 +1,10 @@
 "use client"
 
-import {useUserStore} from "./store/App.store";
-import AuthFormComponent from "./components/AuthForm/AuthFormComponent";
-import Home from "./pages/home/Home";
+import {ChatApp} from "./components/ChatApp";
 
 
 const App = () => {
-  const { showAuthPage, setShowAuthPage } = useUserStore();
-
-  return (
-    <>
-      {showAuthPage && (<AuthFormComponent handleSignIn={() => setShowAuthPage()} />)}
-      {!showAuthPage && (<Home />)}
-    </>
-  );
+  return <ChatApp/>
 }
 
 export default App;

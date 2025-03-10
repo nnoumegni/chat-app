@@ -1,0 +1,10 @@
+export const DB_NAME = 'chat-db';
+export const ROOMS_TABLE_NAME = 'rooms';
+export const USERS_TABLE_NAME = 'users';
+export const ROOM_USERS_DB_NAME = 'room-users';
+export const ROOM_MESSAGES_DB_NAME = 'room-messages';
+export const NAME_INDEX_FIELDS = ['name'];
+export const FULL_NAME_INDEX_FIELDS = ['fullName'];
+export const TEXT_INDEX_FIELDS = ['text'];
+export const BACKEND_URL = 'http://localhost:4000';
+export const CHAT_EVENT_NAME = 'chat';
