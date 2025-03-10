@@ -37,7 +37,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to load th
 
 ## Design Decisions
 The most important aspect of a real-time app is performance. In order to achieve our goal, we've made the following design decisions:
-### Handling Sockets communications
+### Handling Socket communications
 #### Front-end
 - Have only one hook to manage communication with the backend socket server
 - Upon login, create a web socket passing the user id as a query param for future requests
@@ -55,7 +55,7 @@ The most important aspect of a real-time app is performance. In order to achieve
 - For scalability, create a separate table for each room chat history instead of having a single and huge table with foreign keys
 
 ### Folder structure
-The folder structure below takes into account the app scalability and maintainability with clear separation of concerns with the layouts, components, hooks, models, store and api logic added into separate folders.
+The folder structure below takes into account the app scalability and maintainability with a clear separation of concerns. Layouts, components, hooks, models, store and api logics are all in separate folders easy to find and to maintain.
 The ChatApp component component is the main entry point to the App.
 ```
 📦 Chat App
