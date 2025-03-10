@@ -1,4 +1,7 @@
 ## Getting Started
+
+![App Demo](https://github.com/nnoumegni/chat-app/blob/main/public/assets/preview.gif)
+
 This app is build using React with NextJs and NodeJs at the backend. To get started
 
 ### 1) Install the dependencies
@@ -28,5 +31,3 @@ yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to load the app.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.

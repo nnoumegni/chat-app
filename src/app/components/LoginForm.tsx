@@ -31,7 +31,6 @@ export const LoginForm = ({toggleForm}) => {
     useEffect(() => {
         const authData = localStorage.getItem('authData');
         if(authData) {
-            console.log(authData)
             const {username, token} = JSON.parse(authData);
             handleApiCall({
                 path: 'account',
