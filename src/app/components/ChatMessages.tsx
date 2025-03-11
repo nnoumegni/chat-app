@@ -1,17 +1,19 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useFetchData} from "../api/fetch-data";
-import {JoinRoomPayload, Message, RoomUser, User} from "../models/chat-models";
+import {JoinRoomPayload, Message, Room, RoomUser, User} from "../models/chat-models";
 import {useAppStore} from "../store/use-app.store";
 import {UseSocketIo} from "../hooks/use-socket-io";
 import {CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../constants/api-configs";
-import {IconConnected, IconUsers} from "./Icons";
+import {IconBack, IconConnected, IconUsers} from "./Icons";
 
 export const ChatMessages = () => {
     const [isRoomUser, setIsRoomUser] = useState(false);
     const [showUserList, setShowUserList] = useState(false);
+    const [isDirectMessaging, setIsDirectMessaging] = useState(false);
+    const [dmUser, setDmUser] = useState<User>();
     const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
     const {handleApiCall} = useFetchData();
-    const {user, isConnected, selectedRoom, messages, addMessage, setMessages} = useAppStore();
+    const {user, isConnected, selectedRoom, setSelectedRoom, messages, addMessage, setMessages} = useAppStore();
     const {emit, subscribe, unsubscribe} = UseSocketIo();
     const messageInputRef = useRef();
     const messageContainerRef = useRef();
@@ -45,7 +47,7 @@ export const ChatMessages = () => {
     const handleFilterMessage = useCallback(() => {
         const {value} = filterInputRef.current;
         console.log(value);
-    }, [])
+    }, []);
 
     const handleJoinRoomCTA = useCallback((evt) => {
         evt.preventDefault();
@@ -65,6 +67,23 @@ export const ChatMessages = () => {
 
         resetConnectedUsersStatus()
     };
+
+    const handleToggleMessagingType = (isDM, dmUser: User = undefined) => {
+        setIsDirectMessaging(isDM);
+
+        if(isDM) {
+            setDmUser(dmUser);
+
+            // Since user ids are unique, we can join them in sorted order to have a unique DM room id
+            // Need a way to prevent collision if there is already a generic room with that id
+            const sortedIds = [dmUser.id, user.id].sort();
+            const uniqueDmRoomId = parseInt(sortedIds.join(''), 10);
+            const room: Room = {id: uniqueDmRoomId, name: dmUser.fullName, addedBy: user.id, uri: `${uniqueDmRoomId}`};
+
+            setSelectedRoom({room});
+            setIsRoomUser(true);
+        }
+    }
 
     const resetConnectedUsersStatus = () => {
         let roomUsers: RoomUser[] = [];
@@ -191,39 +210,58 @@ export const ChatMessages = () => {
             {selectedRoom && isRoomUser && (
                 <header className='flex items-center justify-between w-full px-6 z-50 bg-[#fff] sticky top-0 pb-1 border-b border-grey-500'>
                     <div className="relative flex items-center justify-start">
-                        <div
-                            className="flex items-center justify-start capitalize font-bold cursor-pointer"
-                            onClick={handleToggleUserList}
-                            onBlur={handleToggleUserList}
-                        >
-                            <div className="relative">
-                                <IconUsers/>
-                                <span className="flex items-center justify-center w-[16px] h-[16px] bg-green-500 px-1 py-0.5 text-[10px] text-white rounded-full absolute top-[-5px] right-[0px]">
-                                    {roomUsers.length}
-                                </span>
-                            </div>
-                            <span className="ml-1 capitalize">{selectedRoom?.name}</span>
-                        </div>
-                        {showUserList && (
-                            <ul id="dropdownMenu"
-                                className="absolute top-[100%] block shadow-lg shadow-blue-100 bg-white py-4 z-[1000] min-w-full w-max rounded max-h-96 overflow-auto">
-                                {roomUsers.map((user: RoomUser, idx) => {
-                                    const {fullName, isConnected} = user;
-                                    return (
-                                        <li key={idx} className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer">
-                                            <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={fullName}/>
-                                            <div className="inline-flex items-center justify-start">
-                                                {isConnected && (
-                                                    <div className="mr-1">
-                                                        <IconConnected/>
+                        {!isDirectMessaging && (
+                            <>
+                                <div
+                                    className="flex items-center justify-start capitalize font-bold cursor-pointer"
+                                    onClick={handleToggleUserList}
+                                    onBlur={handleToggleUserList}
+                                >
+                                    <div className="relative">
+                                        <IconUsers/>
+                                        <span className="flex items-center justify-center w-[16px] h-[16px] bg-green-500 px-1 py-0.5 text-[10px] text-white rounded-full absolute top-[-5px] right-[0px]">
+                                            {roomUsers.length}
+                                        </span>
+                                    </div>
+                                    <span className="ml-1 capitalize">{selectedRoom?.name}</span>
+                                </div>
+                                {showUserList && (
+                                    <ul id="dropdownMenu"
+                                        className="absolute top-[100%] block shadow-lg shadow-blue-100 bg-white py-4 z-[1000] min-w-full w-max rounded max-h-96 overflow-auto">
+                                        {roomUsers.map((user: RoomUser, idx) => {
+                                            const {fullName, isConnected} = user;
+                                            return (
+                                                <li
+                                                    key={idx} className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer"
+                                                    onClick={() => handleToggleMessagingType(true, user)}
+                                                >
+                                                    <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={fullName}/>
+                                                    <div className="inline-flex items-center justify-start">
+                                                        {isConnected && (
+                                                            <div className="mr-1">
+                                                                <IconConnected/>
+                                                            </div>
+                                                        )}
+                                                        <span>{fullName}</span>
                                                     </div>
-                                                )}
-                                                <span>{fullName}</span>
-                                            </div>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                )}
+                            </>
+                        )}
+                        {isDirectMessaging && (
+                            <div
+                                className="flex items-center justify-start capitalize font-bold cursor-pointer"
+                                onClick={() => handleToggleMessagingType(false)}
+                            >
+                                <div className="relative flex items-center justify-start">
+                                    <IconBack/>
+                                    <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={dmUser?.fullName}/>
+                                </div>
+                                <span className="ml-1 capitalize">{dmUser?.fullName}</span>
+                            </div>
                         )}
                     </div>
 

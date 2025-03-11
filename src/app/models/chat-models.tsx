@@ -1,4 +1,4 @@
-export type Room = {id: number, name: string; addedBy?: number; uri?: string; unreadMessageCount?: number};
+export type Room = {id: number; name: string; addedBy?: number; uri?: string; unreadMessageCount?: number};
 export type User = {id?: number; fullName: string; token?: string};
 export type RoomUser = {id: number; fullName: string; userId: number; isConnected?: boolean};
 export type Message = {id?: number; userId: number; sender?: User; roomId: number; text: string; date: string};
