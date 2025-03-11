@@ -114,9 +114,7 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
-        const m = await idb.findItems({sortOrder: 'asc'});
-        console.log(m);
-        return m;
+        return await idb.findItems({sortOrder: 'asc'});
     }
 
     const addMessage = async ({message}: {message: Message;}) => {
