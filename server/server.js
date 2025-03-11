@@ -38,6 +38,7 @@ class Server {
 		this.io.on('connection',  (socket) => {
 			// Get the user and room associated with this connection
 			const from = _.get(socket, 'handshake.query.userId');
+			console.log(`new connection from ${from}`);
 
 			// Register event handlers
 			SUPPORTED_EVENTS.forEach(({name: eventName}) => {
@@ -57,7 +58,7 @@ class Server {
 		this.io.sockets.on('disconnect', (socket) => {
 			// Clean up user open connection list
 			const from = _.get(socket, 'handshake.query.userId');
-			console.log(`new disconnect from ${from}`);
+			console.log(`new disconnection from ${from}`);
 			this.socketInstances[from] = (this.socketInstances[from] || []).filter(socket => socket && socket.connected);
 		});
 

@@ -63,8 +63,12 @@ export const ChatMessages = () => {
         evt.preventDefault();
         setShowUserList(!showUserList);
 
+        resetConnectedUsersStatus()
+    };
+
+    const resetConnectedUsersStatus = () => {
         let roomUsers: RoomUser[] = [];
-        return handleApiCall({
+        handleApiCall({
             path: 'chat',
             action: 'getRoomUsers',
             data: {roomId, callback: (connectedUsers: number[]) => {
@@ -72,11 +76,12 @@ export const ChatMessages = () => {
             }}
         }).then((users: RoomUser[]) => {
             roomUsers = users;
+            setRoomUsers(roomUsers);
         });
-    };
+    }
 
     // Note: a user can be part of a room but is not connected. Let's not filter them out.
-    // Instead let's reflect their offline status
+    // Instead let's reflect their offline status with isConnected decorator
     const updatedUsersStatus = (roomUsers: RoomUser[], connectedUsers: number[]) => {
         for(let i = 0; i < connectedUsers.length; i++) {
             const userId = connectedUsers[i];
@@ -85,8 +90,6 @@ export const ChatMessages = () => {
                 roomUser.isConnected = true;
             }
         }
-
-        setRoomUsers(roomUsers);
     }
 
     useEffect(() => {
@@ -113,6 +116,11 @@ export const ChatMessages = () => {
                 setMessages({messages: roomMessages});
                 scrollToBottom();
             });
+
+            // Close previously opened dropdown
+            // Reset connected users status
+            setShowUserList(false);
+            resetConnectedUsersStatus();
 
             subscribe({eventName: CHAT_EVENT_NAME, roomIds: [roomId], callback: newMessageCallback});
             subscribe({eventName: CHAT_ROOM_JOIN_EVENT_NAME, roomIds: [roomId], callback: newUserJoinCallback});
