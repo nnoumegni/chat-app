@@ -87,10 +87,29 @@ export const useFetchData = () => {
         return {success, room: newRoom};
     }
 
-    const getRoomUsers = async ({roomId, userIds}: {roomId: number; userIds: number[]}) => {
-        await indexedDB.setup(USERS_TABLE_NAME, [FULL_NAME_INDEX_FIELDS]);
-        const filters = {id: {operator: '$in', value: userIds}};
-        return await indexedDB.findItems({filters});
+    const getRoomUsers = async ({roomId, userIds, callback}: {roomId: number; userIds?: number[], callback?: (connectedUsers: number[]) => void}) => {
+        const idb = new IndexedDB(ROOM_USERS_DB_NAME);
+        const tableName = `${roomId}`;
+
+        // Set the table name and the search index field
+        await idb.setup(tableName, [FULL_NAME_INDEX_FIELDS]);
+
+        let filters;
+        if(userIds && userIds.length) {
+            filters = {userId: {operator: '$in', value: userIds}};
+        }
+
+        // Get connected user list
+        // For a better user experience, let's not wait for this backend call to complete before giving the user a feedback
+        // The callback function will be used to decorate the user object afterward
+        // Note: Ideally we should only run this when bootstrapping the app and have an event listener to update the list when users join/leave a room
+        runChatAction({path: 'get-room-users', data: {roomId}}).then(({success, users}) => {
+            if(typeof callback === 'function' && success) {
+                callback(users);
+            }
+        });
+
+        return await idb.findItems({filters});
     }
 
     // Important: we should ideally save the userId only and use it later to retrieve

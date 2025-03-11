@@ -85,7 +85,7 @@ export class IndexedDB {
     });
 
     // 🔎 Search based on any field using filterItems
-    const results = await this.findItems(filters);
+    const results = await this.findItems({filters});
     const existingData = results[0] || {};
     return await this.setItems([{...existingData, ...data}]);
   }

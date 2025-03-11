@@ -11,3 +11,14 @@ export const IconUsers = () => {
         </>
     )
 }
+
+export const IconConnected = () => {
+    return (
+        <>
+            <label htmlFor="radio2" className="relative flex items-center justify-center mr-1 w-3 h-3 cursor-pointer border-2 border-teal-500 rounded-full overflow-hidden peer-checked:before:hidden p-0.5">
+                <span className="w-full h-full border-[6px] border-teal-500 rounded-full"/>
+            </label>
+        </>
+    )
+}
+

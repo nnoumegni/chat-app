@@ -1,15 +1,17 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useFetchData} from "../api/fetch-data";
-import {JoinRoomPayload, Message, User} from "../models/chat-models";
+import {JoinRoomPayload, Message, RoomUser, User} from "../models/chat-models";
 import {useAppStore} from "../store/use-app.store";
 import {UseSocketIo} from "../hooks/use-socket-io";
 import {CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../constants/api-configs";
-import {IconUsers} from "./Icons";
+import {IconConnected, IconUsers} from "./Icons";
 
 export const ChatMessages = () => {
     const [isRoomUser, setIsRoomUser] = useState(false);
+    const [showUserList, setShowUserList] = useState(false);
+    const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
     const {handleApiCall} = useFetchData();
-    const {user, selectedRoom, messages, addMessage, setMessages} = useAppStore();
+    const {user, isConnected, selectedRoom, messages, addMessage, setMessages} = useAppStore();
     const {emit, subscribe, unsubscribe} = UseSocketIo();
     const messageInputRef = useRef();
     const messageContainerRef = useRef();
@@ -57,6 +59,36 @@ export const ChatMessages = () => {
         });
     }, [selectedRoom]);
 
+    const handleToggleUserList = (evt) => {
+        evt.preventDefault();
+        setShowUserList(!showUserList);
+
+        let roomUsers: RoomUser[] = [];
+        return handleApiCall({
+            path: 'chat',
+            action: 'getRoomUsers',
+            data: {roomId, callback: (connectedUsers: number[]) => {
+                updatedUsersStatus(roomUsers, connectedUsers);
+            }}
+        }).then((users: RoomUser[]) => {
+            roomUsers = users;
+        });
+    };
+
+    // Note: a user can be part of a room but is not connected. Let's not filter them out.
+    // Instead let's reflect their offline status
+    const updatedUsersStatus = (roomUsers: RoomUser[], connectedUsers: number[]) => {
+        for(let i = 0; i < connectedUsers.length; i++) {
+            const userId = connectedUsers[i];
+            const roomUser = roomUsers.find(user => user.userId === userId);
+            if(roomUser) {
+                roomUser.isConnected = true;
+            }
+        }
+
+        setRoomUsers(roomUsers);
+    }
+
     useEffect(() => {
         if(roomId && user) {
             getRoomMessages().then(async (messages) => {
@@ -91,7 +123,7 @@ export const ChatMessages = () => {
             unsubscribe({eventName: CHAT_EVENT_NAME, roomIds: [roomId], callback: newMessageCallback});
             unsubscribe({eventName: CHAT_ROOM_JOIN_EVENT_NAME, roomIds: [roomId], callback: newUserJoinCallback});
         }
-    }, [selectedRoom, user]);
+    }, [selectedRoom, user, isConnected]);
 
     useEffect(() => {
         if(user) {
@@ -101,7 +133,7 @@ export const ChatMessages = () => {
                 setIsRoomUser(isChatRoomUser);
             });
         }
-    }, [user])
+    }, [user, selectedRoom])
 
     const newMessageCallback = (message: Message) => {
         // Append to the message store
@@ -135,10 +167,10 @@ export const ChatMessages = () => {
             path: 'chat',
             action: 'getRoomUsers',
             data: {roomId, userIds}
-        }).then(async (users: User[]) => {
+        }).then(async (users: RoomUser[]) => {
             const userMap = {};
-            users.map(user => {
-                const {id: userId} = user;
+            users.map((user: RoomUser) => {
+                const {userId} = user;
                 userMap[userId] = user;
             });
 
@@ -150,35 +182,41 @@ export const ChatMessages = () => {
         <div className="w-full h-full min-h-screen flex flex-col items-start justify-start">
             {selectedRoom && isRoomUser && (
                 <header className='flex items-center justify-between w-full px-6 z-50 bg-[#fff] sticky top-0 pb-1 border-b border-grey-500'>
-                    <div className="relative flex items-center justify-startcapitalize font-bold cursor-pointer">
-                        <div className="relative">
-                            <IconUsers/>
-                            <span className="flex items-center justify-center w-[16px] h-[16px] bg-green-500 px-1 py-0.5 text-[10px] text-white rounded-full absolute top-[-5px] right-[0px]">2</span>
+                    <div className="relative flex items-center justify-start">
+                        <div
+                            className="flex items-center justify-start capitalize font-bold cursor-pointer"
+                            onClick={handleToggleUserList}
+                            onBlur={handleToggleUserList}
+                        >
+                            <div className="relative">
+                                <IconUsers/>
+                                <span className="flex items-center justify-center w-[16px] h-[16px] bg-green-500 px-1 py-0.5 text-[10px] text-white rounded-full absolute top-[-5px] right-[0px]">
+                                    {roomUsers.length}
+                                </span>
+                            </div>
+                            <span className="ml-1 capitalize">{selectedRoom?.name}</span>
                         </div>
-                        <span className="ml-1 capitalize">{selectedRoom?.name}</span>
-                        <ul id="dropdownMenu"
-                            className="absolute top-[100%] block shadow-lg shadow-blue-100 bg-white py-4 z-[1000] min-w-full w-max rounded max-h-96 overflow-auto">
-                            <li className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer">
-                                <img src="https://readymadeui.com/profile_2.webp"
-                                     className="w-8 h-8 rounded-full shrink-0 mr-3"/>
-                                    John Doe
-                            </li>
-                            <li className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer">
-                                <img src="https://readymadeui.com/team-3.webp"
-                                     className="w-8 h-8 rounded-full shrink-0 mr-3"/>
-                                    Alena
-                            </li>
-                            <li className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer">
-                                <img src="https://readymadeui.com/team-2.webp"
-                                     className="w-8 h-8 rounded-full shrink-0 mr-3"/>
-                                    Justin Kelwin
-                            </li>
-                            <li className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer">
-                                <img src="https://readymadeui.com/team-5.webp" className="w-8 h-8 rounded-full shrink-0 mr-3"/>
-                                    Mark Justin
-                            </li>
-                        </ul>
-
+                        {showUserList && (
+                            <ul id="dropdownMenu"
+                                className="absolute top-[100%] block shadow-lg shadow-blue-100 bg-white py-4 z-[1000] min-w-full w-max rounded max-h-96 overflow-auto">
+                                {roomUsers.map((user: RoomUser, idx) => {
+                                    const {fullName, isConnected} = user;
+                                    return (
+                                        <li key={idx} className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer">
+                                            <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={fullName}/>
+                                            <div className="inline-flex items-center justify-start">
+                                                {isConnected && (
+                                                    <div className="mr-1">
+                                                        <IconConnected/>
+                                                    </div>
+                                                )}
+                                                <span>{fullName}</span>
+                                            </div>
+                                        </li>
+                                    )
+                                })}
+                            </ul>
+                        )}
                     </div>
 
                     <div className='px-6 py-1 my-2 bg-white shadow-md rounded-md relative tracking-wide'>

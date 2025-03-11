@@ -49,6 +49,7 @@ class Server {
 			if(!from) { return; }
 
 			// Keep track of all connected clients
+			// This is very helpful when Direct Messaging a user so we can send the message to all connected socket from that user
 			this.socketInstances[from] = (this.socketInstances[from] || []).filter(socket => socket && socket.connected);
 			this.socketInstances[from].push(socket);
 		});
@@ -76,6 +77,19 @@ class Server {
 			if(!isInRoom) {
 				socket.join(channel);
 			}
+		});
+	}
+
+	getUsersInRoom({roomId}) {
+		const channel = this.getChannelName({eventName: CHAT_EVENT_NAME, roomId});
+		return this.io.in(channel).fetchSockets().then((sockets) => {
+			const userMap = {};
+			sockets.forEach((socket) => {
+				const from = _.get(socket, 'handshake.query.userId');
+				userMap[from] = from;
+			});
+
+			return Object.keys(userMap).map(key => parseInt(key, 10));
 		});
 	}
 
@@ -162,6 +176,15 @@ class Server {
 			delete this.subscriptions[from];
 
 			res.status(201).send({success: true});
+		});
+
+		app.post('/get-room-users', (req, res) => {
+			const roomId = _.get(req.body, 'roomId');
+			this.getUsersInRoom({roomId}).then((users) => {
+				res.status(201).send({success: true, users});
+			}, () => {
+				res.status(201).send({success: false});
+			});
 		});
 	}
 }
