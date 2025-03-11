@@ -4,13 +4,13 @@ import {ChatMessages} from "../components/ChatMessages";
 import {useAppStore} from "../store/use-app.store";
 import {useFetchData} from "../api/fetch-data";
 import {io} from "socket.io-client";
-import {BACKEND_URL, CHAT_EVENT_NAME} from "../constants/api-configs";
+import {BACKEND_URL, CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../constants/api-configs";
 import {UseSocketIo} from "../hooks/use-socket-io";
 
 export const AuthLayout = () => {
     const [showAddNewRoomForm, setShowAddNewRoomForm] = useState(false);
     const {user, addRoom, setSocket, isConnected} = useAppStore();
-    const {onConnect, onDisconnect, onChat} = UseSocketIo();
+    const {onConnect, onDisconnect, onChat, onRoomJoin} = UseSocketIo();
     const { handleApiCall } = useFetchData();
     const roomNameInputRef = useRef();
     const userId = user?.id;
@@ -42,6 +42,7 @@ export const AuthLayout = () => {
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on(CHAT_EVENT_NAME, onChat);
+        socket.on(CHAT_ROOM_JOIN_EVENT_NAME, onRoomJoin);
 
         if(isConnected) {
             setSocket({socket});
@@ -52,6 +53,7 @@ export const AuthLayout = () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
             socket.off(CHAT_EVENT_NAME, onChat);
+            socket.off(CHAT_ROOM_JOIN_EVENT_NAME, onRoomJoin);
         };
     }, [isConnected]);
 

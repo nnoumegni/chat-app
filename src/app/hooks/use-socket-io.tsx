@@ -1,6 +1,6 @@
 import {useCallback} from "react";
 import {useAppStore} from "../store/use-app.store";
-import {Message} from "../models/chat-models";
+import {JoinRoomPayload, Message, User} from "../models/chat-models";
 import {CHAT_EVENT_NAME} from "../constants/api-configs";
 import {useFetchData} from "../api/fetch-data";
 
@@ -9,7 +9,7 @@ export const UseSocketIo = () => {
     const {handleApiCall} = useFetchData();
     const userId = user?.id;
 
-    const emit = useCallback(({eventName, data}: {eventName: string; data: Message}) => {
+    const emit = useCallback(({eventName, data}: {eventName: string; data: Message | JoinRoomPayload}) => {
         socket.emit(eventName, data);
         return Promise.resolve({success: true});
     }, [socket]);
@@ -33,7 +33,15 @@ export const UseSocketIo = () => {
         });
     }
 
-    const subscribe = useCallback(({eventName, roomIds, callback}: {eventName: string; roomIds: number[], callback: (message: Message) => void}) => {
+    const onRoomJoin = ({user, roomId}) => {
+        return handleApiCall({
+            path: 'chat',
+            action: 'addRoomUser',
+            data: {roomId, user}
+        });
+    }
+
+    const subscribe = useCallback(({eventName, roomIds, callback}: {eventName: string; roomIds: number[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
         subscriptions[eventName] = subscriptions[eventName] || [];
         roomIds.forEach(roomId => {
             subscriptions[eventName].push({roomId, callback})
@@ -52,7 +60,7 @@ export const UseSocketIo = () => {
 
     // A user can have multiple subscriptions to the same event but with different callbacks
     // Make sure to unsubscribe only to the specified room with the same callback
-    const unsubscribe = useCallback(({eventName, roomIds, callback}: {eventName: string; roomIds: number[], callback: (message: Message) => void}) => {
+    const unsubscribe = useCallback(({eventName, roomIds, callback}: {eventName: string; roomIds: number[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
         roomIds.forEach(roomId => {
             subscriptions[eventName] = (subscriptions[eventName] || []).filter(sub => {
                 const {callback: cb, roomId: rid} = sub;
@@ -68,6 +76,7 @@ export const UseSocketIo = () => {
         onConnect,
         onDisconnect,
         onChat,
+        onRoomJoin,
         subscribe,
         unsubscribe
     }

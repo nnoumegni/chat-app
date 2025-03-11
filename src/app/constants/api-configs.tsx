@@ -8,3 +8,4 @@ export const FULL_NAME_INDEX_FIELDS = ['fullName'];
 export const TEXT_INDEX_FIELDS = ['text'];
 export const BACKEND_URL = 'http://localhost:4000';
 export const CHAT_EVENT_NAME = 'chat';
+export const CHAT_ROOM_JOIN_EVENT_NAME = 'new-user-joined';

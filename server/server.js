@@ -15,6 +15,11 @@ app.use(express.json());
 // Parse URL-encoded form data
 app.use(express.urlencoded({ extended: true }));
 
+const CHAT_EVENT_NAME = 'chat';
+const CHAT_ROOM_JOIN_EVENT_NAME = 'new-user-joined';
+
+const SUPPORTED_EVENTS = [{name: CHAT_EVENT_NAME}, {name: CHAT_ROOM_JOIN_EVENT_NAME}];
+
 // This class manage all socket connections and chat room communications using Socket.io
 class Server {
 	constructor() {
@@ -33,9 +38,12 @@ class Server {
 		this.io.on('connection',  (socket) => {
 			// Get the user and room associated with this connection
 			const from = _.get(socket, 'handshake.query.userId');
-			console.log(`new connection from ${from}`);
-			socket.on('chat', (data) => {
-				return this.emit({eventName: 'chat', data});
+
+			// Register event handlers
+			SUPPORTED_EVENTS.forEach(({name: eventName}) => {
+				socket.on(eventName, (data) => {
+					return this.emit({eventName, data});
+				});
 			});
 
 			if(!from) { return; }
@@ -57,7 +65,8 @@ class Server {
 
 	// Return a consistent channel name for chat rooms
 	getChannelName({eventName, roomId}) {
-		return `${eventName}-${roomId}`;
+		return `${roomId}`;
+		// return `${eventName}-${roomId}`;
 	}
 
 	// Register user sockets to a chat room (channel)

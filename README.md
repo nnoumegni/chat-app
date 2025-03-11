@@ -2,7 +2,7 @@
 
 ### [Watch the video](https://www.youtube.com/watch?v=Wavb_ucARsY)
 
-[![App Demo](https://github.com/nnoumegni/chat-app/blob/main/public/assets/preview.gif)](https://www.youtube.com/watch?v=Wavb_ucARsY)
+[![App Demo](https://github.com/nnoumegni/chat-app/blob/main/public/assets/preview.jpg)](https://www.youtube.com/watch?v=Wavb_ucARsY)
 
 This app is build using React with NextJs and NodeJs at the backend. To get started
 

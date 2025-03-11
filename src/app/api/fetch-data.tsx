@@ -89,7 +89,7 @@ export const useFetchData = () => {
 
     const getRoomUsers = async ({roomId, userIds}: {roomId: number; userIds: number[]}) => {
         await indexedDB.setup(USERS_TABLE_NAME, [FULL_NAME_INDEX_FIELDS]);
-        const filters = {id: {operator: 'in', value: userIds}};
+        const filters = {id: {operator: '$in', value: userIds}};
         return await indexedDB.findItems({filters});
     }
 
