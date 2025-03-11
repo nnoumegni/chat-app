@@ -24,9 +24,14 @@ export const ChatMessages = () => {
         if(text && text.trim()) {
             const message: Message = {text, userId: id, roomId, date};
 
-            // Immediately broadcast the message
             const newMessage = {...message, ...{sender: user}};
-            emit({eventName: CHAT_EVENT_NAME, data: newMessage}).then(() => {
+
+            // Immediately broadcast the message
+            // Persist the message to the DB
+            Promise.all([
+                handleApiCall({path: 'chat', action: 'addMessage', data: {message: newMessage}}),
+                emit({eventName: CHAT_EVENT_NAME, data: newMessage})
+            ]).then(() => {
                 evt.target.reset();
             });
         }
@@ -66,13 +71,6 @@ export const ChatMessages = () => {
         addMessage({message});
 
         scrollToBottom();
-
-        // Persist the message to the DB
-        return handleApiCall({
-            path: 'chat',
-            action: 'addMessage',
-            data: {message}
-        });
     };
 
     const scrollToBottom = () => {
