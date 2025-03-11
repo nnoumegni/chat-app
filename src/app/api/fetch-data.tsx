@@ -87,12 +87,10 @@ export const useFetchData = () => {
         return {success, room: newRoom};
     }
 
-    const getRoomUsers = async ({roomId}: {roomId: number}) => {
-        const idb = new IndexedDB(ROOM_USERS_DB_NAME);
-        const tableName = `${roomId}`;
-        // Set the table name and the search index field
-        await idb.setup(tableName, [FULL_NAME_INDEX_FIELDS]);
-        return idb.findItems({});
+    const getRoomUsers = async ({roomId, userIds}: {roomId: number; userIds: number[]}) => {
+        await indexedDB.setup(USERS_TABLE_NAME, [FULL_NAME_INDEX_FIELDS]);
+        const filters = {id: {operator: 'in', value: userIds}};
+        return await indexedDB.findItems({filters});
     }
 
     // Important: we should ideally save the userId only and use it later to retrieve
@@ -116,7 +114,9 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
-        return idb.findItems({sortOrder: 'asc'});
+        const m = await idb.findItems({sortOrder: 'asc'});
+        console.log(m);
+        return m;
     }
 
     const addMessage = async ({message}: {message: Message;}) => {

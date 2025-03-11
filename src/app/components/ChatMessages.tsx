@@ -97,7 +97,7 @@ export const ChatMessages = () => {
         }).then(async (users: User[]) => {
             const userMap = {};
             users.map(user => {
-                const {userId} = user;
+                const {id: userId} = user;
                 userMap[userId] = user;
             });
 

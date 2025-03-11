@@ -61,8 +61,11 @@ export const AuthLayout = () => {
                         <div className="flex items-center gap-2 pt-6 pb-2 px-4 sticky top-0 bg-white min-h-[64px] z-[100]">
                             {!showAddNewRoomForm && (
                                 <div className="w-full flex items-center justify-between px-3">
-                                    <div className="font-bold capitalize">
-                                        {user.fullName}
+                                    <div className="flex items-center justify-start font-bold capitalize">
+                                        <label htmlFor="radio2" className="relative flex items-center justify-center mr-1 w-3 h-3 cursor-pointer border-2 border-teal-500 rounded-full overflow-hidden peer-checked:before:hidden p-0.5">
+                                            <span className="w-full h-full border-[6px] border-teal-500 rounded-full"/>
+                                        </label>
+                                        <span>{user.fullName}</span>
                                     </div>
                                     <button
                                         type="button"
