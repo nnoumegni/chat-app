@@ -96,7 +96,7 @@ export const ChatMessages = () => {
     useEffect(() => {
         if(user) {
             const {id: currentUser} = user;
-            getRoomUsers([12]).then(userData => {
+            getRoomUsers([currentUser]).then(userData => {
                 const isChatRoomUser = Object.keys(userData).map(key => parseInt(key, 10)).includes(currentUser);
                 setIsRoomUser(isChatRoomUser);
             });
