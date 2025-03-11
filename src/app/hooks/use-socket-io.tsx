@@ -5,7 +5,7 @@ import {CHAT_EVENT_NAME} from "../constants/api-configs";
 import {useFetchData} from "../api/fetch-data";
 
 export const UseSocketIo = () => {
-    const {user, socket, subscriptions, setIsConnected, setIsConnecting, addMessage, setSubscriptions} = useAppStore();
+    const {user, socket, subscriptions, setIsConnected, setIsConnecting, setSubscriptions} = useAppStore();
     const {handleApiCall} = useFetchData();
     const userId = user?.id;
 

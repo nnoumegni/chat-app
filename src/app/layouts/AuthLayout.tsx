@@ -14,7 +14,6 @@ export const AuthLayout = () => {
     const { handleApiCall } = useFetchData();
     const roomNameInputRef = useRef();
     const userId = user?.id;
-    const socket: any = io(BACKEND_URL, {query: {userId}});
 
     const handleAddRoom = (evt) => {
         evt.preventDefault();
@@ -37,6 +36,8 @@ export const AuthLayout = () => {
     };
 
     useEffect(() => {
+        const socket: any = io(BACKEND_URL, {query: {userId}});
+
         // Set socket event callbacks
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
@@ -62,9 +63,11 @@ export const AuthLayout = () => {
                             {!showAddNewRoomForm && (
                                 <div className="w-full flex items-center justify-between px-3">
                                     <div className="flex items-center justify-start font-bold capitalize">
-                                        <label htmlFor="radio2" className="relative flex items-center justify-center mr-1 w-3 h-3 cursor-pointer border-2 border-teal-500 rounded-full overflow-hidden peer-checked:before:hidden p-0.5">
-                                            <span className="w-full h-full border-[6px] border-teal-500 rounded-full"/>
-                                        </label>
+                                        {isConnected && (
+                                            <label htmlFor="radio2" className="relative flex items-center justify-center mr-1 w-3 h-3 cursor-pointer border-2 border-teal-500 rounded-full overflow-hidden peer-checked:before:hidden p-0.5">
+                                                <span className="w-full h-full border-[6px] border-teal-500 rounded-full"/>
+                                            </label>
+                                        )}
                                         <span>{user.fullName}</span>
                                     </div>
                                     <button
