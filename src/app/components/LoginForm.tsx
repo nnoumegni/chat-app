@@ -1,10 +1,11 @@
-import {useCallback, useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {useFetchData} from "../api/fetch-data";
 import {useAppStore} from "../store/use-app.store";
 
 export const LoginForm = ({toggleForm}) => {
     const usernameInput = useRef();
     const passwordInput = useRef();
+    const [enableAutoLogin, setEnableAutoLogin] = useState(false);
     const { loading, error, data, handleApiCall } = useFetchData();
     const {setUser, setIsAuthenticated} = useAppStore();
 
@@ -30,7 +31,7 @@ export const LoginForm = ({toggleForm}) => {
 
     useEffect(() => {
         const authData = localStorage.getItem('authData');
-        if(authData) {
+        if(authData && enableAutoLogin) {
             const {username, token} = JSON.parse(authData);
             handleApiCall({
                 path: 'account',
