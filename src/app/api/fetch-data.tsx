@@ -68,13 +68,15 @@ export const useFetchData = () => {
         return await indexedDB.findItems({filters});
     }
 
-    const addRoom = async ({name, user}: {room: Room; user: User}) => {
+    const addRoom = async ({name, user, uri}: {room: Room; user: User; uri?: string}) => {
         const {id: addedBy} = user;
-        const uri = `${crypto.randomUUID()}-${addedBy}`;
+
+        uri = uri || `${crypto.randomUUID()}-${addedBy}`;
         const newRoomData = {name, addedBy, uri};
+
         // Set the table name and the search index field
         await indexedDB.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        const {success} = await indexedDB.setItems([newRoomData]);
+        const {success} = indexedDB.addOrUpdate({uri}, newRoomData);
 
         // If we successfully added the room, then let's add the owner as the first room user
         let newRoom;

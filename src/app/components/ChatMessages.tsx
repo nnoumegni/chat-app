@@ -61,56 +61,6 @@ export const ChatMessages = () => {
         });
     }, [selectedRoom]);
 
-    const handleToggleUserList = (evt) => {
-        evt.preventDefault();
-        setShowUserList(!showUserList);
-
-        resetConnectedUsersStatus()
-    };
-
-    const handleToggleMessagingType = (isDM, dmUser: User = undefined) => {
-        setIsDirectMessaging(isDM);
-
-        if(isDM) {
-            setDmUser(dmUser);
-
-            // Since user ids are unique, we can join them in sorted order to have a unique DM room id
-            // Need a way to prevent collision if there is already a generic room with that id
-            const sortedIds = [dmUser.id, user.id].sort();
-            const uniqueDmRoomId = parseInt(sortedIds.join(''), 10);
-            const room: Room = {id: uniqueDmRoomId, name: dmUser.fullName, addedBy: user.id, uri: `${uniqueDmRoomId}`};
-
-            setSelectedRoom({room});
-            setIsRoomUser(true);
-        }
-    }
-
-    const resetConnectedUsersStatus = () => {
-        let roomUsers: RoomUser[] = [];
-        handleApiCall({
-            path: 'chat',
-            action: 'getRoomUsers',
-            data: {roomId, callback: (connectedUsers: number[]) => {
-                updatedUsersStatus(roomUsers, connectedUsers);
-            }}
-        }).then((users: RoomUser[]) => {
-            roomUsers = users;
-            setRoomUsers(roomUsers);
-        });
-    }
-
-    // Note: a user can be part of a room but is not connected. Let's not filter them out.
-    // Instead let's reflect their offline status with isConnected decorator
-    const updatedUsersStatus = (roomUsers: RoomUser[], connectedUsers: number[]) => {
-        for(let i = 0; i < connectedUsers.length; i++) {
-            const userId = connectedUsers[i];
-            const roomUser = roomUsers.find(user => user.userId === userId);
-            if(roomUser) {
-                roomUser.isConnected = true;
-            }
-        }
-    }
-
     useEffect(() => {
         if(roomId && user) {
             getRoomMessages().then(async (messages) => {
@@ -160,7 +110,57 @@ export const ChatMessages = () => {
                 setIsRoomUser(isChatRoomUser);
             });
         }
-    }, [user, selectedRoom])
+    }, [user, selectedRoom]);
+
+    const handleToggleUserList = (evt) => {
+        evt.preventDefault();
+        setShowUserList(!showUserList);
+
+        resetConnectedUsersStatus()
+    };
+
+    const handleToggleMessagingType = (isDM, dmUser: User = undefined) => {
+        setIsDirectMessaging(isDM);
+
+        if(isDM) {
+            setDmUser(dmUser);
+
+            // Since user ids are unique, we can join them in sorted order to have a unique DM room id
+            // Need a way to prevent collision if there is already a generic room with that id
+            const sortedIds = [dmUser.id, user.id].sort();
+            const uniqueDmRoomId = parseInt(sortedIds.join(''), 10);
+            const room: Room = {id: uniqueDmRoomId, name: dmUser.fullName, addedBy: user.id, uri: `${uniqueDmRoomId}`};
+
+            setSelectedRoom({room});
+            setIsRoomUser(true);
+        }
+    }
+
+    const resetConnectedUsersStatus = () => {
+        let roomUsers: RoomUser[] = [];
+        handleApiCall({
+            path: 'chat',
+            action: 'getRoomUsers',
+            data: {roomId, callback: (connectedUsers: number[]) => {
+                updatedUsersStatus(roomUsers, connectedUsers);
+            }}
+        }).then((users: RoomUser[]) => {
+            roomUsers = users;
+            setRoomUsers(roomUsers);
+        });
+    }
+
+    // Note: a user can be part of a room but is not connected. Let's not filter them out.
+    // Instead let's reflect their offline status with isConnected decorator
+    const updatedUsersStatus = (roomUsers: RoomUser[], connectedUsers: number[]) => {
+        for(let i = 0; i < connectedUsers.length; i++) {
+            const userId = connectedUsers[i];
+            const roomUser = roomUsers.find(user => user.userId === userId);
+            if(roomUser) {
+                roomUser.isConnected = true;
+            }
+        }
+    }
 
     const newMessageCallback = (message: Message) => {
         // Append to the message store
