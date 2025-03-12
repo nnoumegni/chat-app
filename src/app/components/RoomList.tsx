@@ -12,12 +12,12 @@ export const RoomList = () => {
     const {user, isConnected, rooms, selectedRoom, setRooms, setSelectedRoom} = useAppStore();
 
     const newMessageCallback = useCallback((message: Message) => {
-        const {roomId} = message;
-        const room = rooms.find(room => room.id === roomId);
+        const {roomUri} = message;
+        const room = rooms.find(room => room.uri === roomUri);
 
         if(room) {
             const count = (room.unreadMessageCount || 0) + 1;
-            setUnreadMessageCount({roomId, count});
+            setUnreadMessageCount({roomUri, count});
         }
     }, [rooms]);
 
@@ -36,19 +36,19 @@ export const RoomList = () => {
     }, [isConnected, user]);
 
     useEffect(() => {
-        const roomIds = rooms.map(room => room.id);
+        const roomUris = rooms.map(room => room.uri);
         if(isConnected) {
             // Subscribe to user rooms
-            subscribe({eventName: CHAT_EVENT_NAME, roomIds, callback: newMessageCallback});
+            subscribe({eventName: CHAT_EVENT_NAME, roomUris, callback: newMessageCallback});
         }
 
         return () => {
-            unsubscribe({eventName: CHAT_EVENT_NAME, roomIds, callback: newMessageCallback});
+            unsubscribe({eventName: CHAT_EVENT_NAME, roomUris, callback: newMessageCallback});
         }
     }, [rooms]);
 
-    const setUnreadMessageCount = ({roomId, count}) => {
-        const room = rooms.find(room => room.id === roomId);
+    const setUnreadMessageCount = ({roomUri, count}) => {
+        const room = rooms.find(room => room.uri === roomUri);
         if(room) {
             room.unreadMessageCount  = count;
             setRooms({rooms});
@@ -56,9 +56,9 @@ export const RoomList = () => {
     }
 
     const handleClick = ({room}) => {
-        const {id: roomId} = room;
+        const {uri: roomUri} = room;
 
-        setUnreadMessageCount({roomId, count: 0});
+        setUnreadMessageCount({roomUri, count: 0});
         setSelectedRoom({room});
     };
 

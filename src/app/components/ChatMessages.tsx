@@ -19,7 +19,7 @@ export const ChatMessages = () => {
     const messageContainerRef = useRef();
     const filterInputRef = useRef();
 
-    const roomId = selectedRoom?.id;
+    const roomUri = selectedRoom?.uri;
 
     const handleSendMessage = useCallback((evt) => {
         evt.preventDefault();
@@ -29,7 +29,7 @@ export const ChatMessages = () => {
         const {value: text} = messageInputRef.current;
 
         if(text && text.trim()) {
-            const message: Message = {text, userId: id, roomId, date};
+            const message: Message = {text, userId: id, roomUri, date};
 
             const newMessage = {...message, ...{sender: user}};
 
@@ -52,17 +52,17 @@ export const ChatMessages = () => {
     const handleJoinRoomCTA = useCallback((evt) => {
         evt.preventDefault();
 
-        const {id: roomId} = selectedRoom;
+        const {uri: roomUri} = selectedRoom;
         return Promise.all([
-            handleApiCall({path: 'chat', action: 'addRoomUser', data: {roomId, user}}),
-            emit({eventName: CHAT_ROOM_JOIN_EVENT_NAME, data: {user, roomId}}),
+            handleApiCall({path: 'chat', action: 'addRoomUser', data: {roomUri, user}}),
+            emit({eventName: CHAT_ROOM_JOIN_EVENT_NAME, data: {user, roomUri}}),
         ]).then(([{success}]) => {
             setIsRoomUser(success);
         });
     }, [selectedRoom]);
 
     useEffect(() => {
-        if(roomId && user) {
+        if(roomUri && user) {
             getRoomMessages().then(async (messages) => {
                 // For performance, let's only get the the users which messages are in the viewport
                 const userIdMap = {};
@@ -91,14 +91,14 @@ export const ChatMessages = () => {
             setShowUserList(false);
             resetConnectedUsersStatus();
 
-            subscribe({eventName: CHAT_EVENT_NAME, roomIds: [roomId], callback: newMessageCallback});
-            subscribe({eventName: CHAT_ROOM_JOIN_EVENT_NAME, roomIds: [roomId], callback: newUserJoinCallback});
+            subscribe({eventName: CHAT_EVENT_NAME, roomUris: [roomUri], callback: newMessageCallback});
+            subscribe({eventName: CHAT_ROOM_JOIN_EVENT_NAME, roomUris: [roomUri], callback: newUserJoinCallback});
         }
 
         // Clean up event listeners
         return () => {
-            unsubscribe({eventName: CHAT_EVENT_NAME, roomIds: [roomId], callback: newMessageCallback});
-            unsubscribe({eventName: CHAT_ROOM_JOIN_EVENT_NAME, roomIds: [roomId], callback: newUserJoinCallback});
+            unsubscribe({eventName: CHAT_EVENT_NAME, roomUris: [roomUri], callback: newMessageCallback});
+            unsubscribe({eventName: CHAT_ROOM_JOIN_EVENT_NAME, roomUris: [roomUri], callback: newUserJoinCallback});
         }
     }, [selectedRoom, user, isConnected]);
 
@@ -128,8 +128,8 @@ export const ChatMessages = () => {
             // Since user ids are unique, we can join them in sorted order to have a unique DM room id
             // Need a way to prevent collision if there is already a generic room with that id
             const sortedIds = [dmUser.id, user.id].sort();
-            const uniqueDmRoomId = parseInt(sortedIds.join(''), 10);
-            const room: Room = {id: uniqueDmRoomId, name: dmUser.fullName, addedBy: user.id, uri: `${uniqueDmRoomId}`};
+            const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
+            const room: Room = {name: dmUser.fullName, addedBy: user.id, uri: `${uniqueDmRoomUri}`};
 
             setSelectedRoom({room});
             setIsRoomUser(true);
@@ -141,7 +141,7 @@ export const ChatMessages = () => {
         handleApiCall({
             path: 'chat',
             action: 'getRoomUsers',
-            data: {roomId, callback: (connectedUsers: number[]) => {
+            data: {roomUri, callback: (connectedUsers: number[]) => {
                 updatedUsersStatus(roomUsers, connectedUsers);
             }}
         }).then((users: RoomUser[]) => {
@@ -170,7 +170,7 @@ export const ChatMessages = () => {
     };
 
     const newUserJoinCallback = (payload: JoinRoomPayload) => {
-        console.log(user, roomId)
+        console.log(user, roomUri)
     };
 
     const scrollToBottom = () => {
@@ -185,7 +185,7 @@ export const ChatMessages = () => {
         return handleApiCall({
             path: 'chat',
             action: 'getMessages',
-            data: {roomId}
+            data: {roomUri}
         });
     }
 
@@ -193,7 +193,7 @@ export const ChatMessages = () => {
         return handleApiCall({
             path: 'chat',
             action: 'getRoomUsers',
-            data: {roomId, userIds}
+            data: {roomUri, userIds}
         }).then(async (users: RoomUser[]) => {
             const userMap = {};
             users.map((user: RoomUser) => {

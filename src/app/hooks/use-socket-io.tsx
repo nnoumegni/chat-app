@@ -33,18 +33,18 @@ export const UseSocketIo = () => {
         });
     }
 
-    const onRoomJoin = ({user, roomId}) => {
+    const onRoomJoin = ({user, roomUri}) => {
         return handleApiCall({
             path: 'chat',
             action: 'addRoomUser',
-            data: {roomId, user}
+            data: {roomUri, user}
         });
     }
 
-    const subscribe = useCallback(({eventName, roomIds, callback}: {eventName: string; roomIds: number[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
+    const subscribe = useCallback(({eventName, roomUris, callback}: {eventName: string; roomUris: string[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
         subscriptions[eventName] = subscriptions[eventName] || [];
-        roomIds.forEach(roomId => {
-            subscriptions[eventName].push({roomId, callback})
+        roomUris.forEach(roomUri => {
+            subscriptions[eventName].push({roomUri, callback})
         });
 
         // Update the app subscriptions store
@@ -54,17 +54,17 @@ export const UseSocketIo = () => {
         return handleApiCall({
             path: 'chat',
             action: 'subscribe',
-            data: {eventName, roomIds, userId}
+            data: {eventName, roomUris, userId}
         });
     }, [subscriptions]);
 
     // A user can have multiple subscriptions to the same event but with different callbacks
     // Make sure to unsubscribe only to the specified room with the same callback
-    const unsubscribe = useCallback(({eventName, roomIds, callback}: {eventName: string; roomIds: number[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
-        roomIds.forEach(roomId => {
+    const unsubscribe = useCallback(({eventName, roomUris, callback}: {eventName: string; roomUris: string[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
+        roomUris.forEach(uri => {
             subscriptions[eventName] = (subscriptions[eventName] || []).filter(sub => {
-                const {callback: cb, roomId: rid} = sub;
-                return !(cb === callback && rid === roomId)
+                const {callback: cb, roomUri} = sub;
+                return !(cb === callback && uri === roomUri)
             });
         });
 

@@ -66,9 +66,9 @@ class Server {
 	}
 
 	// Return a consistent channel name for chat rooms
-	getChannelName({eventName, roomId}) {
-		return `${roomId}`;
-		// return `${eventName}-${roomId}`;
+	getChannelName({eventName, roomUri}) {
+		return `${roomUri}`;
+		// return `${eventName}-${roomUri}`;
 	}
 
 	// Register user sockets to a chat room (channel)
@@ -81,8 +81,8 @@ class Server {
 		});
 	}
 
-	getUsersInRoom({roomId}) {
-		const channel = this.getChannelName({eventName: CHAT_EVENT_NAME, roomId});
+	getUsersInRoom({roomUri}) {
+		const channel = this.getChannelName({eventName: CHAT_EVENT_NAME, roomUri});
 		return this.io.in(channel).fetchSockets().then((sockets) => {
 			const userMap = {};
 			sockets.forEach((socket) => {
@@ -105,8 +105,8 @@ class Server {
 			return Promise.resolve({success: true});
 		}
 
-		rooms.forEach(roomId => {
-			const channel = this.getChannelName({eventName, roomId});
+		rooms.forEach(roomUri => {
+			const channel = this.getChannelName({eventName, roomUri});
 			this.joinChannel({channel, sockets});
 		});
 
@@ -117,8 +117,8 @@ class Server {
 	unsubscribe({eventName, rooms, from}) {
 		// TODO: delete subscriptions from the DB
 
-		rooms.forEach(roomId => {
-			const channel = this.getChannelName({eventName, roomId});
+		rooms.forEach(roomUri => {
+			const channel = this.getChannelName({eventName, roomUri});
 
 			// remove the channel from user subscriptions
 			const userSockets = (this.subscriptions[from] || []).filter(name => name === channel);
@@ -134,8 +134,8 @@ class Server {
 	// Every event originate from a specific room (group or p2p)
 	// So we should only broadcast the event to those who belongs to the corresponding room
 	emit({eventName, data}) {
-		const {roomId} = data;
-		const channel = this.getChannelName({eventName, roomId});
+		const {roomUri} = data;
+		const channel = this.getChannelName({eventName, roomUri});
 		this.io.to(channel).emit(eventName, data);
 
 		return Promise.resolve({success: true});
@@ -145,7 +145,7 @@ class Server {
 		app.post('/subscribe', (req, res) => {
 			const eventName = _.get(req.body, 'eventName');
 			const userId = _.get(req.body, 'userId');
-			const rooms = _.get(req.body, 'roomIds');
+			const rooms = _.get(req.body, 'roomUris');
 
 			this.subscribe({eventName, rooms, from: userId}).then((reps) => {
 				res.status(201).send({success: true});
@@ -155,7 +155,7 @@ class Server {
 		app.post('/unsubscribe', (req, res) => {
 			const eventName = _.get(req.body, 'eventName');
 			const userId = _.get(req.body, 'userId');
-			const rooms = _.get(req.body, 'roomIds');
+			const rooms = _.get(req.body, 'roomUris');
 			this.unsubscribe({eventName, rooms, from: userId}).then((reps) => {
 				res.status(201).send({success: true});
 			});
@@ -180,8 +180,8 @@ class Server {
 		});
 
 		app.post('/get-room-users', (req, res) => {
-			const roomId = _.get(req.body, 'roomId');
-			this.getUsersInRoom({roomId}).then((users) => {
+			const roomUri = _.get(req.body, 'roomUri');
+			this.getUsersInRoom({roomUri}).then((users) => {
 				res.status(201).send({success: true, users});
 			}, () => {
 				res.status(201).send({success: false});

@@ -68,30 +68,30 @@ export const useFetchData = () => {
         return await indexedDB.findItems({filters});
     }
 
-    const addRoom = async ({name, user, uri}: {room: Room; user: User; uri?: string}) => {
+    const addRoom = async ({name, user, roomUri}: {room: Room; user: User; roomUri?: string}) => {
         const {id: addedBy} = user;
 
-        uri = uri || `${crypto.randomUUID()}-${addedBy}`;
+        const uri = roomUri || `${crypto.randomUUID()}-${addedBy}`;
         const newRoomData = {name, addedBy, uri};
 
         // Set the table name and the search index field
         await indexedDB.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        const {success} = indexedDB.addOrUpdate({uri}, newRoomData);
+        const {success} = await indexedDB.addOrUpdate({uri}, newRoomData);
 
         // If we successfully added the room, then let's add the owner as the first room user
         let newRoom;
         if(success) {
             newRoom = await indexedDB.getItem({uri});
-            const {id: roomId} = newRoom;
-            await addRoomUser({roomId, user});
+            const {uri: roomUri} = newRoom;
+            await addRoomUser({roomUri, user});
         }
 
         return {success, room: newRoom};
     }
 
-    const getRoomUsers = async ({roomId, userIds, callback}: {roomId: number; userIds?: number[], callback?: (connectedUsers: number[]) => void}) => {
+    const getRoomUsers = async ({roomUri, userIds, callback}: {roomUri: string; userIds?: number[], callback?: (connectedUsers: number[]) => void}) => {
         const idb = new IndexedDB(ROOM_USERS_DB_NAME);
-        const tableName = `${roomId}`;
+        const tableName = `${roomUri}`;
 
         // Set the table name and the search index field
         await idb.setup(tableName, [FULL_NAME_INDEX_FIELDS]);
@@ -105,7 +105,7 @@ export const useFetchData = () => {
         // For a better user experience, let's not wait for this backend call to complete before giving the user a feedback
         // The callback function will be used to decorate the user object afterward
         // Note: Ideally we should only run this when bootstrapping the app and have an event listener to update the list when users join/leave a room
-        runChatAction({path: 'get-room-users', data: {roomId}}).then(({success, users}) => {
+        runChatAction({path: 'get-room-users', data: {roomUri}}).then(({success, users}) => {
             if(typeof callback === 'function' && success) {
                 callback(users);
             }
@@ -116,9 +116,9 @@ export const useFetchData = () => {
 
     // Important: we should ideally save the userId only and use it later to retrieve
     // the latest user info from the users table to be up to date as it will constantly change
-    const addRoomUser = async ({roomId, user}: {roomId: number; user: User}) => {
+    const addRoomUser = async ({roomUri, user}: {roomUri: string; user: User}) => {
         const idb = new IndexedDB(ROOM_USERS_DB_NAME);
-        const tableName = `${roomId}`;
+        const tableName = `${roomUri}`;
 
         // Set the table name and the search index field
         await idb.setup(tableName, [FULL_NAME_INDEX_FIELDS]);
@@ -129,9 +129,9 @@ export const useFetchData = () => {
         return await idb.addOrUpdate({userId}, {userId, fullName});
     }
 
-    const getMessages = async ({roomId}: {roomId: number}) => {
+    const getMessages = async ({roomUri}: {roomUri: string}) => {
         const idb = new IndexedDB(ROOM_MESSAGES_DB_NAME);
-        const tableName = `${roomId}`;
+        const tableName = `${roomUri}`;
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
@@ -139,9 +139,9 @@ export const useFetchData = () => {
     }
 
     const addMessage = async ({message}: {message: Message;}) => {
-        const {roomId} = message;
+        const {roomUri} = message;
         const idb = new IndexedDB(ROOM_MESSAGES_DB_NAME);
-        const tableName = `${roomId}`;
+        const tableName = `${roomUri}`;
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
