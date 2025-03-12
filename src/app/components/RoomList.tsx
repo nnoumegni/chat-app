@@ -5,6 +5,7 @@ import {Message, Room} from "../models/chat-models";
 import {Loader} from "./Loader";
 import {UseSocketIo} from "../hooks/use-socket-io";
 import {CHAT_EVENT_NAME} from "../constants/api-configs";
+import {Utils} from "../helpers/utils";
 
 export const RoomList = () => {
     const {loading,  handleApiCall} = useFetchData();
@@ -25,11 +26,13 @@ export const RoomList = () => {
         const {id: userId, token} = user;
         handleApiCall({
             path: 'chat',
-            action: 'getRooms',
+            action: 'getUserRooms',
             token,
             data: {userId}
         }).then((rooms: Room[]) => {
             if(rooms && rooms[0]) {
+                rooms = rooms.map(room => Utils.formattedRoom({room, currentUser: user}));
+                console.log(rooms)
                 setRooms({rooms});
             }
         });

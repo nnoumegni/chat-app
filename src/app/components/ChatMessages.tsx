@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useFetchData} from "../api/fetch-data";
-import {JoinRoomPayload, Message, Room, RoomUser, User} from "../models/chat-models";
+import {AddRoom, JoinRoomPayload, Message, Room, RoomUser, User} from "../models/chat-models";
 import {useAppStore} from "../store/use-app.store";
 import {UseSocketIo} from "../hooks/use-socket-io";
 import {CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../constants/api-configs";
@@ -9,7 +9,7 @@ import {IconBack, IconConnected, IconUsers} from "./Icons";
 export const ChatMessages = () => {
     const [isRoomUser, setIsRoomUser] = useState(false);
     const [showUserList, setShowUserList] = useState(false);
-    const [isDirectMessaging, setIsDirectMessaging] = useState(false);
+    // const [isDirectMessaging, setIsDirectMessaging] = useState(false);
     const [dmUser, setDmUser] = useState<User>();
     const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
     const {handleApiCall} = useFetchData();
@@ -19,7 +19,8 @@ export const ChatMessages = () => {
     const messageContainerRef = useRef();
     const filterInputRef = useRef();
 
-    const roomUri = selectedRoom?.uri;
+    const {uri: roomUri, type} = selectedRoom || {};
+    const isDirectMessaging = type === 'dm';
 
     const handleSendMessage = useCallback((evt) => {
         evt.preventDefault();
@@ -53,8 +54,9 @@ export const ChatMessages = () => {
         evt.preventDefault();
 
         const {uri: roomUri} = selectedRoom;
+        const roomUser: RoomUser = {userId: user.id, fullName: user.fullName};
         return Promise.all([
-            handleApiCall({path: 'chat', action: 'addRoomUser', data: {roomUri, user}}),
+            handleApiCall({path: 'chat', action: 'addRoomUser', data: {roomUri, user: roomUser}}),
             emit({eventName: CHAT_ROOM_JOIN_EVENT_NAME, data: {user, roomUri}}),
         ]).then(([{success}]) => {
             setIsRoomUser(success);
@@ -105,9 +107,34 @@ export const ChatMessages = () => {
     useEffect(() => {
         if(user) {
             const {id: currentUser} = user;
-            getRoomUsers([currentUser]).then(userData => {
-                const isChatRoomUser = Object.keys(userData).map(key => parseInt(key, 10)).includes(currentUser);
+
+            // For direct messaging, we should get both users info
+            const userFilter = !isDirectMessaging ? [currentUser] : undefined;
+
+            getRoomUsers(userFilter).then(userData => {
+                const keys = Object.keys(userData).map(key => parseInt(key, 10));
+                const isChatRoomUser = keys.map(key => {
+                    return key;
+                }).includes(currentUser);
+
                 setIsRoomUser(isChatRoomUser);
+
+                if(isDirectMessaging) {
+                    let dmUser;
+
+                    // If I DM myself
+                    if(keys.length === 1) {
+                        dmUser = userData[user.id];
+                    } else if(keys.length === 2) {
+                        const index = keys.findIndex(key => key !== user.id);
+                        if(index !== -1) {
+                            const userKey = keys[index];
+                            dmUser = userData[userKey];
+                        }
+                    }
+
+                    setDmUser(dmUser);
+                }
             });
         }
     }, [user, selectedRoom]);
@@ -118,21 +145,25 @@ export const ChatMessages = () => {
 
         resetConnectedUsersStatus()
     };
+    const handleShowUserInfo = (evt) => {};
+    const handleShowGroupInfo = (evt) => {};
 
-    const handleToggleMessagingType = (isDM, dmUser: User = undefined) => {
-        setIsDirectMessaging(isDM);
-
+    const handleToggleMessagingType = (isDM, dmUser: RoomUser = undefined) => {
         if(isDM) {
-            setDmUser(dmUser);
-
             // Since user ids are unique, we can join them in sorted order to have a unique DM room id
             // Need a way to prevent collision if there is already a generic room with that id
-            const sortedIds = [dmUser.id, user.id].sort();
+            const sortedIds = [dmUser.userId, user.id].sort();
             const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
-            const room: Room = {name: dmUser.fullName, addedBy: user.id, uri: `${uniqueDmRoomUri}`};
+            const roomUri = `${uniqueDmRoomUri}`;
+            const roomUser: RoomUser = {userId: user.id, fullName: user.fullName};
+            const room: AddRoom = {addedBy: user.id, users: [roomUser, dmUser], roomUri, type: 'dm', active: 0};
 
-            setSelectedRoom({room});
-            setIsRoomUser(true);
+            handleApiCall({path: 'chat', action: 'addRoom', token: `${new Date().getTime()}`, data: room}).then(({success, room: dmRoom}) => {
+                if(success) {
+                    setSelectedRoom({room: dmRoom});
+                    setIsRoomUser(true);
+                }
+            }, err => console.log(err));
         }
     }
 
@@ -189,7 +220,7 @@ export const ChatMessages = () => {
         });
     }
 
-    const getRoomUsers = (userIds: number[]) => {
+    const getRoomUsers = (userIds?: number[]) => {
         return handleApiCall({
             path: 'chat',
             action: 'getRoomUsers',
@@ -223,7 +254,10 @@ export const ChatMessages = () => {
                                             {roomUsers.length}
                                         </span>
                                     </div>
-                                    <span className="ml-1 capitalize">{selectedRoom?.name}</span>
+                                    <div className="ml-1 capitalize" onClick={handleShowGroupInfo}>
+                                        <div>{selectedRoom?.name}</div>
+                                        <div className="text-xs text-gray-500 font-[300]">View group info</div>
+                                    </div>
                                 </div>
                                 {showUserList && (
                                     <ul id="dropdownMenu"
@@ -257,10 +291,12 @@ export const ChatMessages = () => {
                                 onClick={() => handleToggleMessagingType(false)}
                             >
                                 <div className="relative flex items-center justify-start">
-                                    <IconBack/>
                                     <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={dmUser?.fullName}/>
                                 </div>
-                                <span className="ml-1 capitalize">{dmUser?.fullName}</span>
+                                <div className="ml-1 capitalize" onClick={handleShowUserInfo}>
+                                    <div>{dmUser?.fullName}</div>
+                                    <div className="text-xs text-gray-500 font-[300]">View user info</div>
+                                </div>
                             </div>
                         )}
                     </div>

@@ -6,6 +6,7 @@ import {useFetchData} from "../api/fetch-data";
 import {io} from "socket.io-client";
 import {BACKEND_URL, CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../constants/api-configs";
 import {UseSocketIo} from "../hooks/use-socket-io";
+import {AddRoom, RoomUser} from "../models/chat-models";
 
 export const AuthLayout = () => {
     const [showAddNewRoomForm, setShowAddNewRoomForm] = useState(false);
@@ -18,12 +19,16 @@ export const AuthLayout = () => {
     const handleAddRoom = (evt) => {
         evt.preventDefault();
         const {value: name} = roomNameInputRef.current;
+
         if(name && name.trim()) {
+            const roomUser: RoomUser = {userId: user.id, fullName: user.fullName};
+            const room: AddRoom = {name, addedBy: user.id, users: [roomUser], active: 1};
+
             handleApiCall({
                 path: 'chat',
                 action: 'addRoom',
                 token: `${new Date().getTime()}`,
-                data: {name, user}
+                data: room
             }).then((resp) => {
                 const {room, success} = resp;
                 if(success) {

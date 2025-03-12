@@ -90,6 +90,22 @@ export class IndexedDB {
     return await this.setItems([{...existingData, ...data}]);
   }
 
+  async addIfNotExist(matchData, data) {
+    const filters = {};
+    Object.keys(matchData).forEach((key) => {
+      filters[key] = {value: matchData[key], operator: '='};
+    });
+
+    // 🔎 Search based on any field using filterItems
+    const results = await this.findItems({filters});
+    if(!(results && results[0])) {
+      const existingData = results[0] || {};
+      return await this.setItems([{...existingData, ...data}]);
+    }
+
+    return {success: true};
+  }
+
   async addItem(data) {
     return this.setItems([data]);
   }
@@ -152,6 +168,15 @@ export class IndexedDB {
     return (await this.findItems({filters}))[0];
   }
 
+  getValue(key, item) {
+    const cleanKey = `${key}`.split('.').map(k => `['${k}']`).join('');
+    try {
+      return eval(`item${cleanKey}`);
+    } catch (e) {
+      return undefined;
+    }
+  }
+
   async findItems({
     filters = null,
     sortField = this.keyPath,
@@ -210,36 +235,63 @@ export class IndexedDB {
               }
 
               // Apply filters
-              let matches = true;
+              let isMatch = true;
               if (filters) {
-                for (const [key, condition] of Object.entries(filters)) {
-                  const cond: any = condition;
-                  if (cond.operator === '=' && item[key] !== cond.value) {
-                    matches = false;
-                  } else if (cond.cond === '>' && item[key] <= cond.value) {
-                    matches = false;
-                  } else if (cond.operator === '<' && item[key] >= cond.value) {
-                    matches = false;
-                  } else if (cond.operator === 'contains' &&
-                      !item[key].toLowerCase().includes(cond.value.toLowerCase())) {
-                    matches = false;
-                  } else if (cond.operator === 'range') {
-                    if (item[key] < cond.value[0] || item[key] > cond.value[1]) {
+                const checkIsMatch = (matchFilters) => {
+                  let matches = true;
+                  for (const [key, condition] of Object.entries(matchFilters)) {
+                    const cond: any = condition;
+                    const value = this.getValue(key, item) || item[key];
+
+                    if (cond.operator === '=' && value !== cond.value) {
                       matches = false;
-                    }
-                  } else if (cond.operator === '$in') {
-                    if (Array.isArray(item[key])) {
-                      if (!item[key].some(val => cond.value.includes(val))) {
+                    } else if (cond.operator === '>' && value <= cond.value) {
+                      matches = false;
+                    } else if (cond.operator === '<' && value >= cond.value) {
+                      matches = false;
+                    } else if (cond.operator === 'contains' &&
+                        !value.toLowerCase().includes(cond.value.toLowerCase())) {
+                      matches = false;
+                    } else if (cond.operator === 'range') {
+                      if (value < cond.value[0] || value > cond.value[1]) {
                         matches = false;
                       }
-                    } else if (!cond.value.includes(item[key])) {
+                    } else if (cond.operator === '$in') {
+                      if (Array.isArray(value)) {
+                        if (!value.some(val => cond.value.includes(val))) {
+                          matches = false;
+                        }
+                      } else if (!cond.value.includes(value)) {
+                        matches = false;
+                      }
+                    } else if (cond.operator === '$not' && value === cond.value) {
                       matches = false;
                     }
+                  }
+
+                  return matches;
+                }
+
+                for (const [key, condition] of Object.entries(filters)) {
+                  if(key === '$or') {
+                    const res = [];
+                    for(let subFilters of condition) {
+                      res.push(checkIsMatch(subFilters));
+                    }
+
+                    const areAllFalse = res.filter(bool => bool === true).length === 0;
+                    if(areAllFalse) {
+                      isMatch = false;
+                    }
+                  } else {
+                     if(!checkIsMatch({[key]: condition})) {
+                       isMatch = false;
+                     }
                   }
                 }
               }
 
-              if (matches && matchSearch) {
+              if (isMatch && matchSearch) {
                 if (count >= offset) {
                   results.push(item);
                 }

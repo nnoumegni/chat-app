@@ -1,7 +1,7 @@
 import {useState} from "react";
 import axios from "axios";
 import {HmacSHA256, enc} from "crypto-js";
-import {ApiRequest, ApiResponse, Message, Room, User} from "../models/chat-models";
+import {AddRoom, ApiRequest, ApiResponse, Message, Room, RoomUser, UpdateRoom, User} from "../models/chat-models";
 import {IndexedDB} from "./indexedbd";
 import {
     BACKEND_URL,
@@ -9,8 +9,10 @@ import {
     FULL_NAME_INDEX_FIELDS,
     NAME_INDEX_FIELDS,
     ROOM_MESSAGES_DB_NAME,
-    ROOM_USERS_DB_NAME, ROOMS_TABLE_NAME,
-    TEXT_INDEX_FIELDS, USERS_TABLE_NAME
+    ROOMS_DB_NAME,
+    ROOMS_TABLE_NAME,
+    TEXT_INDEX_FIELDS,
+    USERS_TABLE_NAME
 } from "../constants/api-configs";
 
 // The main purpose of this hook is to persist data using IndexesDB and handle api calls
@@ -25,6 +27,7 @@ export const useFetchData = () => {
             chat: {
                 addRoom,
                 getRooms,
+                getUserRooms,
                 addRoomUser,
                 getRoomUsers,
                 addMessage,
@@ -62,71 +65,118 @@ export const useFetchData = () => {
 
     };
 
-    const getRooms = async (filters) => {
+    const getUserRooms = async ({userId}) => {
+        const idb = new IndexedDB(ROOMS_DB_NAME);
         // Set the table name and the search index field
-        await indexedDB.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        return await indexedDB.findItems({filters});
+        await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
+
+        const filters = {
+            active: {value: 0, operator: '$not'},
+            $or: [
+                {[`users.${userId}.userId`]: {value: userId, operator: '='}},
+                {type: {value: 'dm', operator: '$not'}}
+            ],
+        };
+
+        return await idb.findItems({filters});
     }
 
-    const addRoom = async ({name, user, roomUri}: {room: Room; user: User; roomUri?: string}) => {
-        const {id: addedBy} = user;
-
-        const uri = roomUri || `${crypto.randomUUID()}-${addedBy}`;
-        const newRoomData = {name, addedBy, uri};
-
-        // Set the table name and the search index field
-        await indexedDB.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        const {success} = await indexedDB.addOrUpdate({uri}, newRoomData);
-
-        // If we successfully added the room, then let's add the owner as the first room user
-        let newRoom;
-        if(success) {
-            newRoom = await indexedDB.getItem({uri});
-            const {uri: roomUri} = newRoom;
-            await addRoomUser({roomUri, user});
+    const getRooms = async (filters): Promise<Room[]> => {
+        const idb = new IndexedDB(ROOMS_DB_NAME);
+        // Important: this prevent from listing all the rooms in the DB
+        if(!(filters && Object.keys(filters).length)) {
+            return []
         }
 
-        return {success, room: newRoom};
+        // Set the table name and the search index field
+        await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
+        return (await idb.findItems({filters})) as Room[];
+    }
+
+    const addRoom = async ({name, addedBy, users: roomUsers, roomUri, type}: AddRoom) => {
+        const idb = new IndexedDB(ROOMS_DB_NAME);
+        const uri = roomUri || `${crypto.randomUUID()}-${addedBy}`;
+
+        // Not saving the data as hashMap will perform well during lookup
+        const users = {};
+        if(roomUsers && roomUsers[0]) {
+            for(let i = 0; i < roomUsers.length; i++) {
+                const user = roomUsers[i];
+                users[user.userId] = user;
+            }
+        }
+
+        const newRoomData = {name, addedBy, uri, type, users};
+
+        // Set the table name and the search index field
+        await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
+        const {success} = await idb.addIfNotExist({uri}, newRoomData);
+
+        if(success) {
+            return {success, room: newRoomData};
+        }
+
+        return {success: false};
+    }
+
+    const updateRoom = async ({roomUri, data}: {roomUri: string; data: UpdateRoom}) => {
+        const idb = new IndexedDB(ROOMS_DB_NAME);
+        // Set the table name and the search index field
+        await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
+        return await idb.addOrUpdate({uri: roomUri}, data);
     }
 
     const getRoomUsers = async ({roomUri, userIds, callback}: {roomUri: string; userIds?: number[], callback?: (connectedUsers: number[]) => void}) => {
-        const idb = new IndexedDB(ROOM_USERS_DB_NAME);
-        const tableName = `${roomUri}`;
+        let roomUsers = [];
 
-        // Set the table name and the search index field
-        await idb.setup(tableName, [FULL_NAME_INDEX_FIELDS]);
+        const filters = {
+            uri: {value: roomUri, operator: '='},
+        };
 
-        let filters;
-        if(userIds && userIds.length) {
-            filters = {userId: {operator: '$in', value: userIds}};
+        const rooms: Room[] = await getRooms(filters);
+        if(rooms && rooms.length === 1) {
+            const allUsers = rooms[0].users || {};
+            const currentUserIds = Object.keys(allUsers);
+
+            const hasFilter = userIds && userIds[0];
+            while(currentUserIds.length) {
+                const userId = currentUserIds.shift() as string;
+                if(!hasFilter || hasFilter && userIds.includes(parseInt(userId, 10))) {
+                    roomUsers.push(allUsers[userId]);
+                }
+            }
         }
 
         // Get connected user list
         // For a better user experience, let's not wait for this backend call to complete before giving the user a feedback
         // The callback function will be used to decorate the user object afterward
         // Note: Ideally we should only run this when bootstrapping the app and have an event listener to update the list when users join/leave a room
-        runChatAction({path: 'get-room-users', data: {roomUri}}).then(({success, users}) => {
+        runChatAction({path: 'get-room-users', data: {roomUri}}).then((resp) => {
+            const {success, users} = resp || {};
             if(typeof callback === 'function' && success) {
                 callback(users);
             }
         });
 
-        return await idb.findItems({filters});
+        return roomUsers;
     }
 
     // Important: we should ideally save the userId only and use it later to retrieve
     // the latest user info from the users table to be up to date as it will constantly change
-    const addRoomUser = async ({roomUri, user}: {roomUri: string; user: User}) => {
-        const idb = new IndexedDB(ROOM_USERS_DB_NAME);
-        const tableName = `${roomUri}`;
+    const addRoomUser = async ({roomUri, user}: {roomUri: string; user: RoomUser}) => {
+        const filters = {
+            uri: {value: roomUri, operator: '='},
+        };
 
-        // Set the table name and the search index field
-        await idb.setup(tableName, [FULL_NAME_INDEX_FIELDS]);
+        const rooms: Room[] = await getRooms(filters);
+        if(rooms && rooms.length === 1) {
+            const users: any = rooms[0].users || {};
+            users[user.userId] = user;
+            return await updateRoom({roomUri, data: {users}});
+        }
 
-        // Let's add the user to the room
-        // Note: if the user is already part of the room, his data will be updated to match the latest
-        const {id: userId, fullName} = user;
-        return await idb.addOrUpdate({userId}, {userId, fullName});
+        return {success: false};
+
     }
 
     const getMessages = async ({roomUri}: {roomUri: string}) => {
@@ -145,7 +195,13 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
-        return idb.setItems([message]);
+
+        const {success} = idb.setItems([message]);
+        if(success) {
+            return updateRoom({roomUri, data: {active: 1}})
+        }
+
+        return {success: false};
     }
 
     const generateToken = ({username, password}) => {
