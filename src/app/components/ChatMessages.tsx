@@ -55,9 +55,10 @@ export const ChatMessages = () => {
 
         const {uri: roomUri} = selectedRoom;
         const roomUser: RoomUser = {userId: user.id, fullName: user.fullName};
+        // return console.log(roomUser);
         return Promise.all([
             handleApiCall({path: 'chat', action: 'addRoomUser', data: {roomUri, user: roomUser}}),
-            emit({eventName: CHAT_ROOM_JOIN_EVENT_NAME, data: {user, roomUri}}),
+            emit({eventName: CHAT_ROOM_JOIN_EVENT_NAME, data: {user: roomUser, roomUri}}),
         ]).then(([{success}]) => {
             setIsRoomUser(success);
         });

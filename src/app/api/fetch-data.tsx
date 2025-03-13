@@ -136,6 +136,7 @@ export const useFetchData = () => {
         const rooms: Room[] = await getRooms(filters);
         if(rooms && rooms.length === 1) {
             const allUsers = rooms[0].users || {};
+            console.log({allUsers})
             const currentUserIds = Object.keys(allUsers);
 
             const hasFilter = userIds && userIds[0];
@@ -154,6 +155,7 @@ export const useFetchData = () => {
         runChatAction({path: 'get-room-users', data: {roomUri}}).then((resp) => {
             const {success, users} = resp || {};
             if(typeof callback === 'function' && success) {
+                console.log(users, roomUsers);
                 callback(users);
             }
         });

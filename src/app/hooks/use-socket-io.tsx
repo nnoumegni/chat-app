@@ -1,6 +1,6 @@
 import {useCallback} from "react";
 import {useAppStore} from "../store/use-app.store";
-import {JoinRoomPayload, Message, User} from "../models/chat-models";
+import {JoinRoomPayload, Message, RoomUser, User} from "../models/chat-models";
 import {CHAT_EVENT_NAME} from "../constants/api-configs";
 import {useFetchData} from "../api/fetch-data";
 
@@ -33,7 +33,7 @@ export const UseSocketIo = () => {
         });
     }
 
-    const onRoomJoin = ({user, roomUri}) => {
+    const onRoomJoin = ({user, roomUri}: {user: RoomUser; roomUri: string;}) => {
         return handleApiCall({
             path: 'chat',
             action: 'addRoomUser',
