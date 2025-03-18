@@ -37,6 +37,7 @@ export const UsersList = ({isModal = false, handleRoomClick}) => {
     }, []);
 
     const handleUserClicked = useCallback(({user: dmUser}: {user: RoomUser}) => {
+        console.log(user.id);
         const roomUser: DmRoom = Utils.roomUserMapper({user: dmUser, currentUser: user});
         if(roomType === 'dm') {
             handleRoomClick({room: roomUser});

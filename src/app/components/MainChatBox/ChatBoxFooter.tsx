@@ -2,16 +2,17 @@
 
 import React, {useCallback, useEffect, useRef} from "react";
 import {useAppStore} from "../../store/use-app.store";
-import {Message} from "../../models/chat-models";
+import {AddRoom, Message, RoomUser, User} from "../../models/chat-models";
 import {CHAT_EVENT_NAME} from "../../constants/api-configs";
 import {useFetchData} from "../../api/fetch-data";
 import {UseSocketIo} from "../../hooks/use-socket-io";
+import {Utils} from "../../helpers/utils";
 
 export const ChatBoxFooter = () => {
-    const {user, selectedRoom, addMessage} = useAppStore();
+    const {user, selectedRoom, addMessage, rooms, addRoom, setRooms} = useAppStore();
     const {emit, subscribe, unsubscribe} = UseSocketIo();
     const {handleApiCall} = useFetchData();
-    const {roomUri, uri} = selectedRoom || {};
+    const {uri: roomUri} = selectedRoom || {};
     const inputEltRef = useRef();
 
     const handleInputKeyUp = (event: KeyboardEvent) => {
@@ -35,41 +36,90 @@ export const ChatBoxFooter = () => {
 
             let receiver;
             if(type === 'dm') {
-                receiver = users.filter(u => u.userId !== userId)[0];
+                const key = Object.keys(users).filter(key => parseInt(key, 10) !== userId)[0];
+                receiver = users[key];
             }
 
             const message: Message = {text, userId, roomUri: currentRoomUri, date, msgUri, type};
 
             const newMessage = {...message, ...{sender, receiver}};
 
+            // Append the message to the message list
+            // Make sure to handle duplicate from the chat event handler
+            addMessage({message: newMessage});
+
             // Immediately broadcast the message
             // Persist the message to the DB
             Promise.all([
                 handleApiCall({path: 'chat', action: 'addMessage', data: {message: newMessage}}),
-                emit({eventName: CHAT_EVENT_NAME, data: newMessage})
+                emit({eventName: CHAT_EVENT_NAME, data: newMessage}),
             ]).then(() => {
-                // Append the message to the message list
-                // Make sure to handle duplicate from the chat event handler
-                addMessage({message: newMessage});
+                // move the new room to the top
             });
         }
     }, [selectedRoom]);
 
     useEffect(() => {
         if(roomUri) {
-            subscribe({eventName: CHAT_EVENT_NAME, roomUris: [roomUri], callback: newMessageCallback}).then();
+            subscribe({eventName: CHAT_EVENT_NAME, callback: newMessageCallback}).then();
         }
 
         // Clean up event listeners
         return () => {
-            unsubscribe({eventName: CHAT_EVENT_NAME, roomUris: [roomUri], callback: newMessageCallback}).then();
+            unsubscribe({eventName: CHAT_EVENT_NAME, callback: newMessageCallback}).then();
         }
     }, [selectedRoom]);
 
-    const newMessageCallback = (message: Message) => {
-        const {userId} = message;
-        // addMessage({message});
-        console.log(message, userId);
+    const newMessageCallback = async (message: Message) => {
+        const {userId, type, sender, receiver, roomUri} = message;
+        const moveToTheTop = (room) => {
+            const newRooms = Utils.addOrMoveArrayItem({
+                arr: rooms,
+                matchData: {uri: roomUri},
+                new_index: 0,
+                item: room
+            });
+
+            setRooms({rooms: newRooms});
+        }
+
+        // Persist the message to my local chat history DB
+        await handleApiCall({path: 'chat', action: 'addMessage', data: message});
+
+        // If it's a DM, the room might not exist yet
+        if(type === 'dm') {
+            // If it's a DM, add the room to my local DB
+            const {userId: senderId, fullname: senderFullName} = sender;
+            const {userId: receiverId, fullname: receiverFullName} = receiver;
+            const newRoom = Utils.roomUserMapper({
+                user: {
+                    id: receiverId,
+                    fullname: receiverFullName
+                },
+                currentUser: {
+                    id: senderId,
+                    fullname: senderFullName
+                }
+            });
+
+            const addRoomSuccess = await handleApiCall({path: 'chat', action: 'addRoom', data: newRoom});
+
+            // Move the room to the top in the left nav
+            moveToTheTop(newRoom);
+
+            // If the room is not currently open,
+            // increment the un-red msg count
+            if(roomUri !== selectedRoom.uri) {
+                // increment the un-red msg count
+            } else if(user.id !== userId) {
+                // If the room is currently open but the message is not from me
+                // Add it to the message list
+                // Note: If the message is from me, then it's already add to the message list
+                addMessage({message});
+            }
+        } else {
+            moveToTheTop(selectedRoom);
+        }
     };
 
     return (

@@ -98,12 +98,13 @@ export class IndexedDB {
 
     // 🔎 Search based on any field using filterItems
     const results = await this.findItems({filters});
-    if(!(results && results[0])) {
+    const exists = !!(results && results[0]);
+    if(!exists) {
       const existingData = results[0] || {};
       return await this.setItems([{...existingData, ...data}]);
     }
 
-    return {success: true};
+    return {success: true, exists };
   }
 
   async addItem(data) {

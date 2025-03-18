@@ -88,7 +88,7 @@ export const ChatBox = () => {
             }
 
             if (isDirectMessaging) {
-                const userData = Utils.getUserDataMap(selectedRoom.users);
+                const userData = selectedRoom.users[user.id];
                 setChatUser(userData);
                 setIsRoomUser(true);
             } else {

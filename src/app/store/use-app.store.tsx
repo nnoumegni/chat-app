@@ -20,6 +20,7 @@ export const useAppStore = create((set) => ({
   showNewRoomForm: false,
   selectedUsers: [],
   roomType: '',
+  themeMode: 'light',
   setUser: ({user}: {user?: User}) => set(() => {
     return {
       user,
@@ -108,6 +109,11 @@ export const useAppStore = create((set) => ({
   setRoomType: ({roomType = ''}) => set(() => {
     return {
       roomType,
+    };
+  }),
+  setThemeMode: ({themeMode = ''}) => set(() => {
+    return {
+      themeMode,
     };
   }),
 }))

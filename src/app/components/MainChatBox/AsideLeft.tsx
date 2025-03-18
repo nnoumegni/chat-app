@@ -17,15 +17,7 @@ export const AsideLeft = () => {
             Promise.resolve([]) // handleApiCall({path: 'chat', action: 'searchUsers', token, data: {}})
         ]).then(([roomItems, userItems]: [roomItems: Room[], userItems: RoomUser[]]) => {
 
-            if(roomItems && roomItems[0] && roomItems[0].type !== 'dm') {
-                roomItems = roomItems.map(room => Utils.formattedRoom({room, currentUser: user}));
-            }
-
-            if(userItems && userItems[0]) {
-                userItems = userItems.map((dmUser: RoomUser): DmRoom => {
-                    return Utils.roomUserMapper({user: dmUser, currentUser: user});
-                });
-            }
+            roomItems = roomItems.map(room => Utils.formattedRoom({room, currentUser: user}));
 
             const allRooms = [...roomItems, ...userItems];
             setRooms({rooms: allRooms});

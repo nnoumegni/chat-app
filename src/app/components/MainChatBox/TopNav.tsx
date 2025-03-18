@@ -1,8 +1,8 @@
 import {useAppStore} from "../../store/use-app.store";
-import {useCallback} from "react";
+import {useCallback, useEffect} from "react";
 
 export const TopNav = () => {
-    const {user, setUser, isConnected, setIsAuthenticated} = useAppStore();
+    const {user, setUser, isConnected, setIsAuthenticated, themeMode, setThemeMode} = useAppStore();
     const handleLogout = useCallback((evt: MouseEvent) => {
         evt.preventDefault();
 
@@ -12,6 +12,18 @@ export const TopNav = () => {
             setUser({user: undefined});
         });
     }, [user]);
+
+    const setTheme = (currentMode = 'light') => {
+        if(currentMode !== themeMode) {
+            localStorage.setItem('connectme-html', currentMode);
+            document.documentElement.setAttribute("data-bs-theme", currentMode);
+            setThemeMode({themeMode: currentMode});
+        }
+    }
+
+    useEffect(() => {
+
+    }, [themeMode]);
 
     return (
         <nav className="tyn-appbar">
@@ -363,13 +375,29 @@ export const TopNav = () => {
                                             <ul className="d-flex align-items-center gap gap-3">
                                                 <li className="inline-flex">
                                                     <div className="form-check">
-                                                        <input className="form-check-input" type="radio" name="themeMode" id="dark" value="dark"/>
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="radio"
+                                                            name="themeMode"
+                                                            id="dark"
+                                                            value="dark"
+                                                            checked={themeMode === 'dark'}
+                                                            onChange={() => setTheme('dark')}
+                                                        />
                                                         <label className="form-check-label small" htmlFor="dark"> On </label>
                                                     </div>
                                                 </li>
                                                 <li className="inline-flex">
                                                     <div className="form-check">
-                                                        <input className="form-check-input" type="radio" name="themeMode" id="light" value="light" checked/>
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="radio"
+                                                            name="themeMode"
+                                                            id="light"
+                                                            value="light"
+                                                            checked={themeMode === 'light'}
+                                                            onChange={() => setTheme('light')}
+                                                        />
                                                         <label className="form-check-label small" htmlFor="light"> Off </label>
                                                     </div>
                                                 </li>

@@ -1,6 +1,7 @@
 import {DmRoom, Room, RoomUser, User} from "../models/chat-models";
 import * as CryptoJS from 'crypto-js';
 import {Storage} from "../api/storage";
+import {findIndex} from 'lodash';
 
 export class Utils {
     static browserDeviceIdStorageKey = 'buuid' ;
@@ -194,7 +195,7 @@ export class Utils {
         };
     }
 
-    static roomUserMapper({user, currentUser}: {user: RoomUser, currentUser: User}): DmRoom {
+    static roomUserMapper({user, currentUser}: {user: User, currentUser: User}): DmRoom & {uri: string} {
             const {id, fullname} = user;
             const dmUserId = id as number;
             const currentUserId = currentUser.id as number;
@@ -209,8 +210,10 @@ export class Utils {
             }
 
             const uri = this.getDmRoomUri({dmUser, currentUser: me});
+
             return {
                 name: fullname,
+                uri,
                 roomUri: uri,
                 users: [dmUser, me],
                 addedBy: currentUserId,
@@ -222,8 +225,20 @@ export class Utils {
         if(!dmUser) {
             debugger;
         }
-        const sortedIds = [dmUser.userId, currentUser.id].sort();
+        const sortedIds = [dmUser.userId, currentUser.userId].sort();
         const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
         return `${uniqueDmRoomUri}`;
     }
+
+    static addOrMoveArrayItem({arr, matchData, new_index, item}) {
+        const old_index = findIndex(arr, matchData);
+        console.log(arr, matchData, item, old_index)
+        if (old_index !== -1) {
+            arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
+        } else {
+            arr.splice(new_index, 0, item);
+        }
+
+        return arr;
+    };
 }

@@ -99,10 +99,11 @@ export const useFetchData = () => {
         const idb = new IndexedDB(ROOMS_DB_NAME);
         const uri = roomUri || `${crypto.randomUUID()}-${addedBy}`;
 
-        // Not saving the data as hashMap will perform well during lookup
+
+        // Note: saving users as hashMap will perform well during lookup
         const users = {};
-        if(roomUsers && roomUsers[0]) {
-            for(let i = 0; i < roomUsers.length; i++) {
+        if (roomUsers && roomUsers[0]) {
+            for (let i = 0; i < roomUsers.length; i++) {
                 const user = roomUsers[i];
                 users[user.userId] = user;
             }
@@ -112,10 +113,10 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        const {success} = await idb.addIfNotExist({uri}, newRoomData);
+        const {success, exists} = await idb.addIfNotExist({uri}, newRoomData);
 
         if(success) {
-            return {success, room: newRoomData};
+            return {success, exists, room: newRoomData};
         }
 
         return {success: false};
@@ -156,7 +157,6 @@ export const useFetchData = () => {
         runChatAction({path: 'get-room-users', data: {roomUri}}).then((resp) => {
             const {success, users} = resp || {};
             if(typeof callback === 'function' && success) {
-                console.log(users, roomUsers);
                 callback(users);
             }
         });

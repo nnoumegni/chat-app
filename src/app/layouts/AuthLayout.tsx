@@ -6,7 +6,7 @@ import {UseSocketIo} from "../hooks/use-socket-io";
 import {MainChatBox} from "../components/MainChatBox";
 
 export const AuthLayout = () => {
-    const {user, setSocket, isConnected, deviceId} = useAppStore();
+    const {user, setSocket, isConnected, deviceId, setThemeMode} = useAppStore();
     const {onConnect, onDisconnect, onChat, onRoomJoin, newMessageCallback, subscribe, unsubscribe} = UseSocketIo();
     const userId = user?.id;
 
@@ -14,7 +14,6 @@ export const AuthLayout = () => {
     // To prevent unexpected server overload
     useEffect(() => {
         if(deviceId) {
-            console.log({deviceId})
             const socket: any = io(BACKEND_URL, {query: {userId, deviceId}});
 
             // Set socket event callbacks
@@ -36,6 +35,12 @@ export const AuthLayout = () => {
                 socket.off(CHAT_ROOM_JOIN_EVENT_NAME, onRoomJoin);
                 unsubscribe({eventName: CHAT_EVENT_NAME, callback: newMessageCallback}).then();
             };
+        }
+
+        const themeMode = localStorage.getItem('connectme-html');
+        if(themeMode) {
+            document.documentElement.setAttribute("data-bs-theme", themeMode);
+            setThemeMode({themeMode});
         }
     }, [isConnected, deviceId]);
 
