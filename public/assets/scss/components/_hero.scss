@@ -1,0 +1,8 @@
+.#{$app-prefix}hero{
+    --bg: var(--#{$prefix}white);
+    [data-bs-theme="dark"] & {
+        --bg: var(--#{$prefix}gray-800);
+    }
+    padding-block: 3rem;
+    background: var(--bg);
+}

@@ -1,0 +1,54 @@
+
+
+.#{$app-prefix}overlay{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--#{$prefix}dark);
+    z-index: 999;
+    opacity: .5;
+    display: none;
+    &.active{
+        display: block;
+    }
+}
+
+.tyn-icon{
+    height: var(--#{$app-prefix}icon-size);
+    width: var(--#{$app-prefix}icon-size);
+    svg,.icon{
+        height: var(--#{$app-prefix}icon-size);
+        width: var(--#{$app-prefix}icon-size);
+    }
+}
+
+.tyn-code-block{
+    position: relative;
+    &-title{
+        position: absolute;
+        inset: 0 0 auto 0;
+        padding: 0.5rem .75rem .375rem;
+        color: $white;
+        border-bottom: 1px solid var(--#{$prefix}dark);
+        background: rgba(var(--#{$prefix}white-rgb), .1);
+        border-radius: $border-radius $border-radius 0 0;
+    }
+    pre{
+        padding: 2.5rem .75rem .625rem;
+    }
+    .tyn-copy{
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0.4rem .75rem .4rem;
+    }
+}
+.tyn-copy{
+    border: none;
+    background: transparent;
+    color: var(--#{$prefix}gray-200);
+    font-size: .75rem;
+    text-shadow: none;
+}

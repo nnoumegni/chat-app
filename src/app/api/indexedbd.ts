@@ -110,6 +110,34 @@ export class IndexedDB {
     return this.setItems([data]);
   }
 
+  async deleteItem(matchData) {
+    const {id: key} = (await this.getItem(matchData)) || {};
+    if(key) {
+      return this.removeItem(key);
+    }
+
+    return {success: false};
+  }
+
+  async removeItem(key) {
+    return this.enqueue(async () => {
+      try {
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(this.storeName, 'readwrite');
+          const store = tx.objectStore(this.storeName);
+          store.delete(key);
+
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = (event) => {
+            reject({success: false, message: new Error('Failed to remove item from IndexedDB')});
+          };
+        });
+      } catch (error) {
+        return {success: false};
+      }
+    });
+  }
+
   // Batch operation to add multiple items at once
   async setItems(items) {
     return this.enqueue(() => {
@@ -168,6 +196,10 @@ export class IndexedDB {
     return (await this.findItems({filters}))[0];
   }
 
+  async searchItems({q = '', searchFields = []}) {
+    return (await this.findItems({searchFields, query: q}));
+  }
+
   getValue(key, item) {
     const cleanKey = `${key}`.split('.').map(k => `['${k}']`).join('');
     try {
@@ -185,7 +217,7 @@ export class IndexedDB {
     sortOrder = 'desc',
     limit = null,
     offset = 0
-  }) {
+  }: any) {
     return this.enqueue(async () => {
       try {
         return new Promise((resolve, reject) => {
@@ -275,7 +307,7 @@ export class IndexedDB {
                 for (const [key, condition] of Object.entries(filters)) {
                   if(key === '$or') {
                     const res = [];
-                    for(let subFilters of condition) {
+                    for(const subFilters of condition) {
                       res.push(checkIsMatch(subFilters));
                     }
 

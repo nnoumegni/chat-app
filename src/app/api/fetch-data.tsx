@@ -1,6 +1,6 @@
 import {useState} from "react";
 import axios from "axios";
-import {HmacSHA256, enc} from "crypto-js";
+import {HmacSHA256, enc, AES} from "crypto-js";
 import {AddRoom, ApiRequest, ApiResponse, Message, Room, RoomUser, UpdateRoom, User} from "../models/chat-models";
 import {IndexedDB} from "./indexedbd";
 import {
@@ -14,6 +14,7 @@ import {
     TEXT_INDEX_FIELDS,
     USERS_TABLE_NAME
 } from "../constants/api-configs";
+import {Utils} from "../helpers/utils";
 
 // The main purpose of this hook is to persist data using IndexesDB and handle api calls
 export const useFetchData = () => {
@@ -32,6 +33,7 @@ export const useFetchData = () => {
                 getRoomUsers,
                 addMessage,
                 getMessages,
+                searchUsers,
                 subscribe: (data) => {
                     return runChatAction({path: 'subscribe', data})
                 },
@@ -127,7 +129,7 @@ export const useFetchData = () => {
     }
 
     const getRoomUsers = async ({roomUri, userIds, callback}: {roomUri: string; userIds?: number[], callback?: (connectedUsers: number[]) => void}) => {
-        let roomUsers = [];
+        const roomUsers = [];
 
         const filters = {
             uri: {value: roomUri, operator: '='},
@@ -136,7 +138,6 @@ export const useFetchData = () => {
         const rooms: Room[] = await getRooms(filters);
         if(rooms && rooms.length === 1) {
             const allUsers = rooms[0].users || {};
-            console.log({allUsers})
             const currentUserIds = Object.keys(allUsers);
 
             const hasFilter = userIds && userIds[0];
@@ -187,7 +188,7 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
-        return await idb.findItems({sortOrder: 'asc'});
+        return await idb.findItems({sortOrder: 'desc'});
     }
 
     const addMessage = async ({message}: {message: Message;}) => {
@@ -211,13 +212,13 @@ export const useFetchData = () => {
         return HmacSHA256(data, `${password}`).toString(enc.Hex);
     };
 
-    const doRegister = async (user: {username: string; password: string; fullName: string}) => {
+    const doRegister = async (user: {username: string; password: string; fullname: string}) => {
         await indexedDB.setup(USERS_TABLE_NAME, [FULL_NAME_INDEX_FIELDS]);
-        const {username, password, fullName} = user;
+        const {username, password, fullname} = user;
         const token = generateToken({username, password});
 
         // Important: never save user plain password. Instead using as part of the encryption salt
-        const {success} = await indexedDB.addItem({username, token, fullName});
+        const {success} = await indexedDB.addItem({username, token, fullname});
         if(success) {
             return doLogin(user);
         }
@@ -226,6 +227,30 @@ export const useFetchData = () => {
     }
 
     const doLogin = async ({username, password, token}: {username: string; password: string}) => {
+        token = token ? token : `${new Date().getTime()}`;
+        const params = {
+            path: 'account',
+            action: 'doProxyAuth',
+            token,
+            data: {doLogin: 1, username, password, token}
+        };
+
+        const encryptedData =  Utils.aes(params); //  CryptoJS.AES.encrypt(JSON.stringify(params), params.token, {}).toString();
+        const reqData = {
+            data: encryptedData,
+            token
+        };
+
+        return runChatAction({path: 'auth', data: reqData}).then(resp => {
+            const {success, user} = resp || {};
+            if(user) {
+                const authData = JSON.stringify({username, token, user});
+                localStorage.setItem("authData", authData);
+            }
+            return resp;
+        });
+
+        /*
         await indexedDB.setup(USERS_TABLE_NAME, [FULL_NAME_INDEX_FIELDS]);
 
         if(!token) {
@@ -235,11 +260,42 @@ export const useFetchData = () => {
         const user = await indexedDB.getItem({username, token});
 
         if(user) {
-            const authData = JSON.stringify({username, token});
+            const authData = JSON.stringify({username, token, user});
             localStorage.setItem("authData", authData);
         }
 
         return {success: !!user, user};
+        */
+    }
+
+    const searchUsers = async ({q = ''}) => {
+        if(!(q && q.trim())) {
+            return []
+        }
+
+        const token = `${new Date().getTime()}`;
+        const params = {
+            path: 'account',
+            action: 'searchSocialProfile',
+            token,
+            data: {matchStr: q, exactMatch: true}
+        };
+
+        const encryptedData =  Utils.aes(params);
+        const reqData = {
+            data: encryptedData,
+            token
+        };
+
+        return runChatAction({path: 'scrud', data: reqData}).then(resp => {
+            const {data} = resp;
+            const users = (data || []).map(p => {
+                const {profileImage: thumb, City: city, Country: country, FirstName: firstname, LastName: lastname, ID: id, FullName: fullname} = p;
+                return { id, firstname, lastname, fullname, city, country, thumb};
+            });
+
+            return users;
+        });
     }
 
     const runChatAction = ({path, data}: {path: string; data: unknown}) => {

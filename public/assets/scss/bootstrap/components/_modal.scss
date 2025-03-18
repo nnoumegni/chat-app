@@ -1,0 +1,10 @@
+.modal{
+  [data-bs-theme="dark"] & {
+    --bs-modal-bg: var(--#{$prefix}gray-800);
+  }
+}
+@include media-breakpoint-up(sm) {
+    .modal-dialog {
+      width: var(--#{$prefix}modal-width);
+    }
+}  

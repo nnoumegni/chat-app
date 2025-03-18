@@ -1,0 +1,27 @@
+
+:root{
+    --#{$prefix}body-gap-x: #{$body-gap-x};
+    @each $name, $value in $sizes {
+        --#{$prefix}size-#{$name}: #{$value};
+    }
+    @each $name, $value in $icons {
+        --#{$prefix}icon-size-#{$name}: #{$value};
+    }
+    @each $name, $value in $grid-breakpoints{
+        --#{$prefix}breakpoint-#{$name}: #{$value};
+    }
+    @include media-breakpoint-up(sm){
+        --#{$prefix}body-gap-x: #{$body-gap-x-sm};
+    }
+}
+
+
+@if $enable-dark-mode {
+    @include color-mode(dark, true) {
+        @each $color, $value in $grays-dark {
+            --#{$prefix}gray-#{$color}: #{$value};
+        }
+        --#{$prefix}heading-color: #{$white}; 
+    }
+}
+  

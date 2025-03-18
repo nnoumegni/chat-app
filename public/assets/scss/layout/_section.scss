@@ -1,0 +1,41 @@
+.#{$app-prefix}section{
+    position: relative;
+    scroll-margin-top: var(--appbar-height);
+    padding: 3.5rem 0;
+    &-head{
+        margin-bottom: 1.5rem;
+        margin-top: -.5rem;
+    }
+    &-content{
+        + .#{$app-prefix}section{
+            &-content{
+                margin-top: 1.5rem;
+            }
+            &-head{
+                margin-top: 2rem;
+            }
+        }
+    }
+}
+
+@include media-breakpoint-up(md){
+    .#{$app-prefix}section{
+        padding: 3.5rem 0;
+        &-lg{
+            padding: 4.5rem 0;
+        }
+        &-head{
+            margin-bottom: 2rem;
+        }
+        &-content{
+            + .#{$app-prefix}section{
+                &-content{
+                    margin-top: 3.5rem;
+                }
+                &-head{
+                    margin-top: 3rem;
+                }
+            }
+        }
+    }
+}

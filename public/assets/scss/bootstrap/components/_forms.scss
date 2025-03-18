@@ -1,0 +1,115 @@
+.form{
+    &-group{
+        --#{$app-prefix}size: #{$size-rg};
+    }
+    &-label{
+        [data-bs-theme="dark"] &{
+            color: var(--bs-gray-400);
+        }
+    }
+    &-control{
+        [data-bs-theme="dark"] &{
+            background-color: var(--#{$prefix}gray-800);
+            border-color: var(--#{$prefix}gray-700);
+            &:disabled{
+                background-color: var(--#{$prefix}gray-700);
+                border-color: var(--#{$prefix}gray-600);
+                opacity: .5;
+            }
+        }
+        &-solid {
+            --soild-input-bg: #{$input-solid-bg};
+            --soild-input-border-color: #{$input-solid-border-color};
+            --soild-input-focus-bg: #{$input-solid-focus-bg};
+            --soild-input-focus-border-color: #{$input-solid-focus-border-color};
+            [data-bs-theme="dark"] & {
+                --soild-input-bg: #{$input-solid-bg-dark};
+                --soild-input-border-color: #{$input-solid-border-color-dark};
+                --soild-input-focus-bg: #{$input-solid-focus-bg-dark};
+                --soild-input-focus-border-color: #{$input-solid-focus-border-color-dark};
+            }
+            background: var(--soild-input-bg);
+            border: 1px solid var(--soild-input-border-color);
+            &:focus {
+                background: var(--soild-input-focus-bg);
+                border-color: var(--soild-input-focus-border-color);
+            }
+        }
+        &-wrap{
+            position: relative;
+        }
+        &-icon{
+            position: absolute;
+            height: var(--#{$app-prefix}size);
+            width: var(--#{$app-prefix}size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            svg,.icon{
+                height: calc(var(--#{$app-prefix}size) / 2.75);
+                width: calc(var(--#{$app-prefix}size) / 2.75);
+            }
+            &.start{
+                left: 0;
+            }
+            &.end{
+                right: 0;
+            }
+        }
+        .start ~ &{
+            padding-left: var(--#{$app-prefix}size);
+        }
+        .end ~ &{
+            padding-right: var(--#{$app-prefix}size);
+        }
+        &-plaintext{
+            &-wrap{
+                .form-control{
+                    &-plaintext{
+                        padding-left: calc(var(--#{$app-prefix}size) - ((var(--#{$app-prefix}size) - var(--#{$app-prefix}size) / 2.75)/2));
+                    }
+                    &-icon{
+                        margin-left: calc(((var(--#{$app-prefix}size) - var(--#{$app-prefix}size) / 2.75)/2) * -1);
+                    }
+                }
+            }
+            &:focus{
+                background-color: transparent;
+                border-color: transparent;
+            }
+        }
+    }
+    &-select{
+        [data-bs-theme="dark"] &{
+            background-color: var(--#{$prefix}gray-800);
+            border-color: var(--#{$prefix}gray-700);
+        }
+    }
+    &-check{
+        display: flex;
+        align-items: flex-start;
+        padding-left: 0;
+        min-height: auto;
+        &-label{
+            font-size: .875rem;
+            line-height: 1.25rem;
+            font-weight: 500;
+            padding-left: 0.625rem;
+            cursor: pointer;
+        }
+        
+        &-input{
+            margin-left: 0 !important;
+            margin-top: .125rem;
+            cursor: pointer;
+            [data-bs-theme="dark"] &{
+                --bs-form-check-bg: var(--#{$prefix}gray-800);
+                border-color: var(--#{$prefix}gray-600);
+                &:checked{
+                    background-color: $form-check-input-checked-bg-color;
+                    border-color: $form-check-input-checked-border-color;
+                }
+            }
+        }
+    }
+}

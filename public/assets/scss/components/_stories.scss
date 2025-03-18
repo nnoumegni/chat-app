@@ -1,0 +1,134 @@
+$stories-thumb-gap: 1.25rem;
+@keyframes ZEROTO100 {
+    0%{
+        width: 0;
+    }
+    100%{
+        width: 100%;
+    }
+}
+.#{$app-prefix}stories{
+    &-thumb{
+        --thumb-border-color: var(--#{$prefix}white);
+        --thumb-border-active-color: var(--#{$prefix}primary);
+        [data-bs-theme="dark"] &{
+            --thumb-border-color: var(--#{$prefix}border-color);
+            --thumb-border-active-color: var(--#{$prefix}primary-500);
+        }
+        margin: -$stories-thumb-gap*.5;
+        .swiper{
+            &-wrapper{
+                flex-wrap: wrap;
+                padding: 2px;
+            }
+            &-slide{
+                padding: $stories-thumb-gap*.5;
+                cursor: pointer;
+                .tyn-image{
+                    transition: .3s ease;
+                    border: 1px solid var(--thumb-border-color);
+                }
+            }
+            &-slide-thumb-active{
+                .tyn-image{
+                    box-shadow: -2px 2px 0 var(--thumb-border-active-color), 2px -2px 0 var(--thumb-border-active-color), 2px 2px 0 var(--thumb-border-active-color), -2px -2px 0 var(--thumb-border-active-color);
+                }
+            }
+        }
+    }
+    &-slider{
+        max-width: 540px;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        height: 100%;
+        --slide-border-color: var(--#{$prefix}gray-200);
+        --slider-bullet-bg: rgba(var(--#{$prefix}white-rgb),.5);
+        --slider-bullet-bg-active: var(--#{$prefix}white);
+        [data-bs-theme="dark"] &{
+            --slide-border-color: var(--#{$prefix}gray-700);
+            --slider-bullet-bg: rgba(var(--#{$prefix}white-rgb),.5);
+            --slider-bullet-bg-active: var(--#{$prefix}white);
+        }
+        .swiper{
+            &-slide{    
+                border-radius: var(--#{$prefix}border-radius);
+                border: 1px solid var(--slide-border-color);
+            }
+            &-pagination{
+                position: absolute;
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+                display: flex;
+                flex-wrap: nowrap;
+                z-index: 2;
+                gap: .5rem;
+                &-bullet{
+                    position: relative;
+                    height: .5rem;
+                    border-radius: .25rem;
+                    width: 100%;
+                    background: var(--slider-bullet-bg);;
+                    &:after{
+                        position: absolute;
+                        content: '';
+                        top: 0;
+                        left: 0;
+                        bottom: 0;
+                        width: 0;
+                        border-radius: .25rem;
+                        background:var(--slider-bullet-bg-active);
+                    }
+                    &-active{
+                        &:after{
+                            animation: ZEROTO100 var(--slide-delay) linear;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    &-item{
+        position: relative;
+        display: grid;
+        height: 100%;
+        .#{$app-prefix}image{
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+    &-content{
+        position: absolute;
+        inset: 0;
+        padding: 1.5rem;
+        border-radius: var(--#{$prefix}border-radius);
+        background-image: linear-gradient(to bottom, rgba($dark, 0.325) 0%, transparent 110px, transparent 110px, transparent calc(100% - 110px), transparent calc(100% - 110px), rgba($dark, 0.325) 100%);
+    }
+    &-page{
+        .#{$app-prefix}aside{
+            display: none;
+        }
+    }
+    &-wrap{
+        padding-right: $grid-gutter-width * .5;
+        padding-left: $grid-gutter-width * .5;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+@include media-breakpoint-up(lg){
+    .#{$app-prefix}stories{
+        &-page{
+            .#{$app-prefix}aside{
+                display: flex;
+            }
+        }
+        &-wrap{
+            height: auto;
+        }
+    }
+}

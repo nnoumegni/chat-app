@@ -1,0 +1,73 @@
+.#{$app-prefix}title{
+    &-overline{
+        --overline-color: var(--#{$prefix}gray-400);
+        [data-bs-theme="dark"] &{
+            --overline-color: var(--#{$prefix}gray-200);
+        }
+        font-size: .688rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--overline-color);
+    }
+}
+
+.#{$app-prefix}title{
+    margin-bottom: 0.25rem;
+}
+
+.#{$app-prefix}subtext{
+    --subtext-color: var(--#{$prefix}gray-400);
+    [data-bs-theme="dark"] &{
+        --subtext-color: var(--#{$prefix}gray-300);
+    }
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--subtext-color);
+}
+
+.#{$app-prefix}overline{
+    --overline-color: var(--#{$prefix}gray-500);
+    [data-bs-theme="dark"] &{
+        --overline-color: var(--#{$prefix}gray-300);
+    }
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--overline-color);
+    text-transform: uppercase;
+}
+
+.#{$app-prefix}text-block{
+    font-size: .875rem;
+    ol{
+        list-style: decimal;
+    }
+    ul{
+        list-style: disc;
+    }
+    p{
+        &:last-child{
+            margin-bottom: 0;
+        }
+    }
+    ol,ul{
+        margin-left: 1rem;
+        li{
+            padding: .25rem 0 .25rem .25rem;
+        }
+        + p{
+            margin-top: 1rem;
+        }
+        + .tyn-code-block{
+            margin-top: 1rem;
+        }
+    }
+    .tyn-code-block{
+        + ol, + ul{
+            margin-top: 1rem;
+        }
+        + p{
+            margin-top: 1.25rem;
+        }
+    }
+}

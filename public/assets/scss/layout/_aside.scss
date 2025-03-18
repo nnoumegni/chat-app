@@ -1,0 +1,90 @@
+.#{$app-prefix}aside{
+    width:var(--aside-width);
+    background: var(--aside-bg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--border-color);
+    &-base{
+        height: var(--content-full-height);
+    }
+    &-head{
+        padding: var(--aside-head-gap-y) var(--aside-gap-x);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    &-foot{
+        padding: var(--aside-head-gap-y) var(--aside-gap-x);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    &-search{
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 0 var(--aside-gap-x) var(--aside-item-gap-y);
+        background: var(--aside-bg);
+    }
+    &-item{
+        padding: var(--aside-item-gap-y) var(--aside-gap-x);
+        cursor: pointer;
+        &:hover,&.active{
+            background: var(--aside-item-active-bg);
+        }
+        &-bubbly{
+            border-radius: var(--aside-item-bubbly-radius);
+            margin: 0 calc(var(--aside-gap-x)*.5);
+            padding: var(--aside-item-gap-y) calc(var(--aside-gap-x)*.5);
+        }
+    }
+    &-body{
+        max-height: 100%;
+        height: 100%;
+        overflow: auto;
+    }
+    
+    &-row{
+        padding: var(--aside-gap-y) var(--aside-gap-x);
+        .nav-tabs-line{
+            margin: 0 calc(var(--aside-gap-x) * -1);
+            padding: 0 var(--aside-gap-x);
+            .nav-link{
+                padding-top: 0;
+            }
+        }
+    }
+}
+
+@include media-breakpoint-down(md){
+    .#{$app-prefix}aside{
+        &.hidden-mobile{
+            display: none;
+            + .#{$app-prefix}main{
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                display: flex;  
+                overflow: hidden;
+            }
+        }
+    }
+}
+
+@include media-breakpoint-up(md){
+    .#{$app-prefix}aside{
+        &-base{
+            position: fixed;
+            left: 0;
+            top: var(--appbar-height);
+            z-index: 1;
+        }
+    }
+    .has-aside-base{
+        padding-left: var(--aside-width);
+    }
+}

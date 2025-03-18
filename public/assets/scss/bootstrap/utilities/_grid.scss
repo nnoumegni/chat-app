@@ -1,0 +1,6 @@
+.gap{
+    --bs-gutter-y: #{$grid-gutter-width};
+    --bs-gutter-x: #{$grid-gutter-width};
+    row-gap: var(--bs-gutter-y);
+    column-gap: var(--bs-gutter-x);
+}

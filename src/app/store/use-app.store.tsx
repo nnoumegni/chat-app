@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand';
+import {User, Message, Room, AddRoom, RoomUser, DmRoom} from '../models/chat-models';
 
 export const useAppStore = create((set) => ({
   user: null,
@@ -12,7 +13,14 @@ export const useAppStore = create((set) => ({
   rooms: [],
   selectedRoom: null,
   subscriptions: {},
-  setUser: ({user}) => set(() => {
+  showAside: false,
+  showMiniBox: false,
+  users: [],
+  deviceId: '',
+  showNewRoomForm: false,
+  selectedUsers: [],
+  roomType: '',
+  setUser: ({user}: {user?: User}) => set(() => {
     return {
       user,
     };
@@ -22,42 +30,42 @@ export const useAppStore = create((set) => ({
       socket,
     };
   }),
-  setIsAuthenticated: ({isAuthenticated}) => set(() => {
+  setIsAuthenticated: ({isAuthenticated = false}) => set(() => {
     return {
       isAuthenticated,
     };
   }),
-  setIsConnected: ({isConnected}) => set(() => {
+  setIsConnected: ({isConnected = false}) => set(() => {
     return {
       isConnected,
     };
   }),
-  setIsConnecting: ({isConnecting}) => set(() => {
+  setIsConnecting: ({isConnecting = false}) => set(() => {
     return {
       isConnecting,
     };
   }),
-  setMessages: ({messages}) => set(() => {
+  setMessages: ({messages}: {messages: Message[]}) => set(() => {
     return {
       messages,
     };
   }),
-  addMessage: ({message}) => set((state) => {
+  addMessage: ({message}: {message: Message}) => set((state: {messages: Message[]}) => {
     return {
-      messages: [...state.messages, message],
+      messages: [message, ...state.messages],
     };
   }),
-  setRooms: ({rooms}) => set(() => {
+  setRooms: ({rooms}: {rooms: Room[]}) => set(() => {
     return {
       rooms,
     };
   }),
-  setSelectedRoom: ({room: selectedRoom}) => set(() => {
+  setSelectedRoom: ({room: selectedRoom}: {room: Room}) => set(() => {
     return {
       selectedRoom,
     };
   }),
-  addRoom: ({room}) => set((state) => {
+  addRoom: ({room}: {room: AddRoom}) => set((state: {rooms: AddRoom[]}) => {
     return {
       rooms: [room, ...state.rooms],
     };
@@ -65,6 +73,41 @@ export const useAppStore = create((set) => ({
   setSubscriptions: ({subscriptions}) => set((state) => {
     return {
       subscriptions,
+    };
+  }),
+  setShowAside: ({showAside = false}) => set(() => {
+    return {
+      showAside,
+    };
+  }),
+  setShowMiniBox: ({showMiniBox = false}) => set(() => {
+    return {
+      showMiniBox,
+    };
+  }),
+  setUsers: ({users}: {users: User[]}) => set(() => {
+    return {
+      users,
+    };
+  }),
+  setDeviceId: ({deviceId = ''}) => set(() => {
+    return {
+      deviceId,
+    };
+  }),
+  setShowNewRoomForm: ({showNewRoomForm = false}) => set(() => {
+    return {
+      showNewRoomForm,
+    };
+  }),
+  addSelectedUser: ({user}: {user: RoomUser | DmRoom}) => set((state: {selectedUsers: RoomUser[]}) => {
+    return {
+      selectedUsers: [...state.selectedUsers, user],
+    };
+  }),
+  setRoomType: ({roomType = ''}) => set(() => {
+    return {
+      roomType,
     };
   }),
 }))

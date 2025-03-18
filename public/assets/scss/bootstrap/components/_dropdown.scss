@@ -1,0 +1,67 @@
+$dropdown-sizes:(
+    'xxs': 8rem,
+    'xs': 12.5rem,
+    'md': 16.25rem,
+    'rg': 18.75rem,
+    'lg': 25rem,
+    'xl': 31.25rem,
+    '2xl': 37.5rem,
+);
+
+$dropdown-head-gap-y: .5rem; 
+
+@each $size, $value in $dropdown-sizes {
+    .dropdown{
+        &-menu-#{$size}{
+            --bs-dropdown-min-width: #{$value};
+        }
+    }
+}
+.dropdown{
+    &-menu{
+        --scroll-track-bg: var(--#{$prefix}primary-200);
+        --scroll-thumb-bg: var(--#{$prefix}primary-100);
+        --scroll-thumb-hover-bg: var(--#{$prefix}primary-300);
+        [data-bs-theme="dark"] &{
+            --bs-dropdown-bg: #{$dropdown-bg-dark};
+            --scroll-track-bg: var(--#{$prefix}gray-700);
+            --scroll-thumb-bg: var(--#{$prefix}gray-600);
+            --scroll-thumb-hover-bg: var(--#{$prefix}gray-800);
+        }
+        &-auto{
+            max-height: calc(100vh - var(--appbar-height) - 20px);
+            overflow: auto;
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+            &::-webkit-scrollbar-track {
+                background: var(--scroll-track-bg);
+                border-radius: 0 var(--bs-dropdown-border-radius) var(--bs-dropdown-border-radius) 0;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: var(--scroll-thumb-bg);
+                border-radius: 0 var(--bs-dropdown-border-radius) var(--bs-dropdown-border-radius) 0;
+            }
+            &::-webkit-scrollbar-thumb:hover {
+                background: var(--scroll-thumb-hover-bg);
+            }
+        }
+    }
+    &-head{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $dropdown-head-gap-y 1.25rem;
+        border-bottom: 1px solid var(--#{$prefix}dropdown-divider-bg);
+        .nav-tabs{
+            --#{$prefix}nav-tabs-border-width: 0;
+            --tabs-active-border-bottom: -#{$dropdown-head-gap-y};
+        }
+    }
+    &-gap{
+        padding: 1.125rem 1.25rem;
+        &:not(:last-child){
+            border-bottom: 1px solid var(--#{$prefix}dropdown-divider-bg);
+        }
+    }
+}

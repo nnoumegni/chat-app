@@ -1,0 +1,217 @@
+button {
+    padding: 0;
+}
+
+.btn-md {
+    @include button-size(
+        $btn-padding-y-md,
+        $btn-padding-x-md,
+        $btn-font-size-md,
+        $btn-border-radius-md
+    );
+}
+
+.btn-xl {
+    @include button-size(
+        $btn-padding-y-xl,
+        $btn-padding-x-xl,
+        $btn-font-size-xl,
+        $btn-border-radius-xl
+    );
+}
+
+@each $name, $value in $theme-colors {
+    .btn-#{$name}-soft {
+        $background: mix($value, $white, 15%);
+        $border: $background;
+        $color: $value;
+        $hover-background: $value;
+        $hover-border: $hover-background;
+        $hover-color: color-contrast($hover-background);
+        $active-background: $hover-background;
+        $active-border: $hover-border;
+        $active-color: $hover-color;
+        $disabled-background: $background;
+        $disabled-border: $border;
+        $disabled-color: $color;
+        @include button-variant(
+            $background,
+            $border,
+            $color,
+            $hover-background,
+            $hover-border,
+            $hover-color,
+            $active-background,
+            $active-border,
+            $active-color,
+            $disabled-background,
+            $disabled-border,
+            $disabled-color
+        );
+    }
+}
+
+.btn-light {
+    $background: $gray-200;
+    $background-dark: $gray-700-dark;
+    $border: $gray-200;
+    $border-dark: $gray-700-dark;
+    $color: $gray-600;
+    $color-dark: $gray-400;
+    $hover-background: $primary-200;
+    $hover-border: $hover-background;
+    $hover-color: $primary;
+    $active-background: $hover-background;
+    $active-border: $hover-border;
+    $active-color: $hover-color;
+    $disabled-background: $background;
+    $disabled-border: $border;
+    $disabled-color: $color;
+    @include button-variant(
+        $background,
+        $border,
+        $color,
+        $hover-background,
+        $hover-border,
+        $hover-color,
+        $active-background,
+        $active-border,
+        $active-color,
+        $disabled-background,
+        $disabled-border,
+        $disabled-color
+    );
+    [data-bs-theme="dark"] & {
+        @include button-variant(
+            $background-dark,
+            $border-dark,
+            $color-dark,
+            $hover-background,
+            $hover-border,
+            $hover-color,
+            $active-background,
+            $active-border,
+            $active-color,
+            $disabled-background,
+            $disabled-border,
+            $disabled-color
+        );
+    }
+}
+
+.btn-white {
+    $background: $white;
+    $background-dark: $gray-800-dark;
+    $border: $white;
+    $border-dark: $gray-800-dark;
+    $color: $gray-600;
+    $color-dark: $gray-400;
+    $hover-background: $primary-200;
+    $hover-border: $hover-background;
+    $hover-color: $primary;
+    $active-background: $hover-background;
+    $active-border: $hover-border;
+    $active-color: $hover-color;
+    $disabled-background: $background;
+    $disabled-border: $border;
+    $disabled-color: $color;
+    @include button-variant(
+        $background,
+        $border,
+        $color,
+        $hover-background,
+        $hover-border,
+        $hover-color,
+        $active-background,
+        $active-border,
+        $active-color,
+        $disabled-background,
+        $disabled-border,
+        $disabled-color
+    );
+    [data-bs-theme="dark"] & {
+        @include button-variant(
+            $background-dark,
+            $border-dark,
+            $color-dark,
+            $hover-background,
+            $hover-border,
+            $hover-color,
+            $active-background,
+            $active-border,
+            $active-color,
+            $disabled-background,
+            $disabled-border,
+            $disabled-color
+        );
+    }
+}
+
+.btn-transparent {
+    $background: transparent;
+    $border: transparent;
+    $color: $gray-600;
+    $hover-background: $primary-200;
+    $hover-border: $hover-background;
+    $hover-color: $primary;
+    $active-background: $hover-background;
+    $active-border: $hover-border;
+    $active-color: $hover-color;
+    $disabled-background: $background;
+    $disabled-border: $border;
+    $disabled-color: $color;
+    @include button-variant(
+        $background,
+        $border,
+        $color,
+        $hover-background,
+        $hover-border,
+        $hover-color,
+        $active-background,
+        $active-border,
+        $active-color,
+        $disabled-background,
+        $disabled-border,
+        $disabled-color
+    );
+}
+
+.btn {
+    --#{$app-prefix}size: var(--#{$prefix}size-rg);
+    --#{$app-prefix}icon-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--#{$app-prefix}size) / 4);
+    svg,
+    .icon {
+        height: var(--#{$app-prefix}icon-size);
+        width: var(--#{$app-prefix}icon-size);
+    }
+    &-icon {
+        --bs-btn-padding-x: 0 !important;
+        height: var(--#{$app-prefix}size);
+        width: var(--#{$app-prefix}size);
+    }
+    &-pill {
+        --bs-btn-border-radius: var(--#{$prefix}border-radius-pill);
+    }
+    &.btn {
+        &-sm {
+            --#{$app-prefix}icon-size: 0.75rem;
+            --#{$app-prefix}size: var(--#{$prefix}size-sm);
+        }
+        &-md {
+            --#{$app-prefix}icon-size: 0.875rem;
+            --#{$app-prefix}size: var(--#{$prefix}size-md);
+        }
+        &-lg {
+            --#{$app-prefix}icon-size: 1.25rem;
+            --#{$app-prefix}size: var(--#{$prefix}size-lg);
+        }
+        &-xl {
+            --#{$app-prefix}icon-size: 1.5rem;
+            --#{$app-prefix}size: var(--#{$prefix}size-xl);
+        }
+    }
+}

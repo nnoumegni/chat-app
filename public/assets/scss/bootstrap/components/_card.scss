@@ -1,0 +1,5 @@
+.card{
+    [data-bs-theme="dark"] &{
+        --bs-card-bg : #{$card-bg-dark};
+    }
+}

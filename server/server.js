@@ -1,8 +1,11 @@
 const ioServer = require('socket.io');
 const express 	= require('express');
+const {AES}  = require('crypto-js');
 const _	= require('lodash');
 const cors = require('cors');
 const http = require('http');
+const axios = require('axios');
+const JsDB = require('./JsBD');
 const PORT = 4000;
 const app = express();
 
@@ -23,6 +26,7 @@ const SUPPORTED_EVENTS = [{name: CHAT_EVENT_NAME}, {name: CHAT_ROOM_JOIN_EVENT_N
 // This class manage all socket connections and chat room communications using Socket.io
 class Server {
 	constructor() {
+		this.db = new JsDB();
 		this.socketInstances = {};
 		this.subscribers = {};
 		this.subscriptions = {};
@@ -38,7 +42,9 @@ class Server {
 		this.io.on('connection',  (socket) => {
 			// Get the user and room associated with this connection
 			const from = _.get(socket, 'handshake.query.userId');
-			console.log(`new connection from ${from}`);
+			const deviceId = _.get(socket, 'handshake.query.deviceId');
+
+			console.log(`new connection from ${from} ${deviceId}`);
 
 			// Register event handlers
 			SUPPORTED_EVENTS.forEach(({name: eventName}) => {
@@ -47,20 +53,25 @@ class Server {
 				});
 			});
 
-			if(!from) { return; }
+			if(!(from && deviceId)) { return; }
 
 			// Keep track of all connected clients
 			// This is very helpful when Direct Messaging a user so we can send the message to all connected socket from that user
-			this.socketInstances[from] = (this.socketInstances[from] || []).filter(socket => socket && socket.connected);
-			this.socketInstances[from].push(socket);
+			this.socketInstances[from] = this.socketInstances[from] || {};
+			this.socketInstances[from][deviceId] = socket;
 		});
 
 		this.io.sockets.on('disconnect', (socket) => {
 			// Clean up user open connection list
 			const from = _.get(socket, 'handshake.query.userId');
-			console.log(`new disconnection from ${from}`);
-			this.socketInstances[from] = (this.socketInstances[from] || []).filter(socket => socket && socket.connected);
+			const deviceId = _.get(socket, 'handshake.query.deviceId');
+
+			console.log(`new disconnection from ${from} deviceId`);
+
+			delete this.socketInstances[from][deviceId];
 		});
+
+		console.log('Listening on: ', PORT);
 
 		this.initRoutes();
 	}
@@ -69,6 +80,10 @@ class Server {
 	getChannelName({eventName, roomUri}) {
 		return `${roomUri}`;
 		// return `${eventName}-${roomUri}`;
+	}
+
+	getUuidByDevice({from, deviceId}) {
+		return `${from}${deviceId}`;
 	}
 
 	// Register user sockets to a chat room (channel)
@@ -96,14 +111,23 @@ class Server {
 
 	// Persist the user subscriptions and connect him to the room
 	subscribe({eventName, rooms, from}) {
+		return Promise.resolve({success: true});
+
 		// TODO: Save user subscriptions to DB
 
-		const sockets = this.socketInstances[from];
+		const keys = Object.keys(this.socketInstances[from] || {});
+
+		const sockets = [];
+		keys.forEach((deviceId) => {
+			sockets.push(this.socketInstances[from][deviceId]);
+		});
 
 		// Stop here if there is no connected socket for this user
 		if(!(sockets && sockets.length)) {
 			return Promise.resolve({success: true});
 		}
+
+		console.log(sockets.length);
 
 		rooms.forEach(roomUri => {
 			const channel = this.getChannelName({eventName, roomUri});
@@ -131,15 +155,42 @@ class Server {
 		return Promise.resolve({success: true});
 	}
 
+	sendMsg({userId, eventName, data}) {
+		// get all connected clients for the receiver
+		const devices = Object.keys((this.socketInstances[userId] || {}));
+		console.log(devices)
+		// Forward the message to all of them
+		devices.forEach((deviceId) => {
+			console.log('sending to ', deviceId);
+			const socket = this.socketInstances[userId][deviceId];
+			if(socket && socket.connected) {
+				socket.emit(eventName, data);
+			}
+		});
+	}
+
 	// Every event originate from a specific room (group or p2p)
 	// So we should only broadcast the event to those who belongs to the corresponding room
 	emit({eventName, data}) {
-		const {roomUri} = data;
-		const channel = this.getChannelName({eventName, roomUri});
-		this.io.to(channel).emit(eventName, data);
+		const {roomUri, type, receiver, sender, users} = data;
+		const {userId: senderId} = sender || {};
+		const {userId: receiverId} = receiver || {};
+
+		console.log(type, receiver, data);
+		this.sendMsg({userId: senderId, eventName, data});
+
+		if(type === 'dm' && receiver) {
+			const {userId} = receiver;
+			this.sendMsg({userId, eventName, data});
+		}
+
+		// const channel = this.getChannelName({eventName, roomUri});
+		// this.io.to(channel).emit(eventName, data);
 
 		return Promise.resolve({success: true});
 	}
+
+
 
 	initRoutes() {
 		app.post('/subscribe', (req, res) => {
@@ -161,22 +212,32 @@ class Server {
 			});
 		});
 
-		app.post('/sign-out', (req, res) => {
-			const from = _.get(req.body, 'userId');
+		app.post('/auth', (req, res) => {
+			const requestIp = require('request-ip');
+			const ip = requestIp.getClientIp(req);
 
-			// Remove user socket instance from connected socket list
-			delete this.socketInstances[from];
+			const data = req.body;
+			data.ip = ip;
+			data.s2s = 1;
 
-			// Remove user from event subscribers
-			(this.subscriptions[from] || []).forEach(eventName => {
-				// Important: do not call unsubscribe method here has it will also remove eventName from user subscriptions
-				delete this.subscribers[eventName][from];
+			// Forward the request to the target server
+			axios({
+				method: req.method,
+				url: `https://api.jetcamer.com/scrud`,
+				data, // Forward the request body
+			}).then(resp => {
+				const {data: response} = resp || {};
+				const {account} = response || {};
+
+				if(account) {
+					const {credit, success, email, username, card, ...user} = account;
+					return res.status(201).send({success, user});
+				} else {
+					return res.status(201).send({success: false});
+				}
+			}, (e) => {
+				res.status(201).send({success: false});
 			});
-
-			// delete user subscriptions
-			delete this.subscriptions[from];
-
-			res.status(201).send({success: true});
 		});
 
 		app.post('/get-room-users', (req, res) => {
@@ -184,6 +245,27 @@ class Server {
 			this.getUsersInRoom({roomUri}).then((users) => {
 				res.status(201).send({success: true, users});
 			}, () => {
+				res.status(201).send({success: false});
+			});
+		});
+
+		app.post('/scrud', (req, res) => {
+			const requestIp = require('request-ip');
+			const ip = requestIp.getClientIp(req);
+
+			const data = req.body;
+			data.ip = ip;
+			data.s2s = 1;
+
+			// Forward the request to the target server
+			axios({
+				method: req.method,
+				url: `https://api.jetcamer.com/scrud`,
+				data, // Forward the request body
+			}).then(resp => {
+				const {data: response} = resp || {};
+				return res.status(201).send(response);
+			}, (e) => {
 				res.status(201).send({success: false});
 			});
 		});

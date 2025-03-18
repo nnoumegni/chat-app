@@ -1,0 +1,111 @@
+.#{$app-prefix}root{
+    --bg:#{$root-body-bg};
+    --appbar-height: 65px;
+    --content-full-height: calc(100vh - var(--appbar-height));
+    --content-full-height: calc(100dvh - var(--appbar-height));
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--bg);
+}
+.#{$app-prefix}content{
+    --aside-bg:#{$root-white};
+    --aside-width:100%;
+    --aside-gap-x: #{$root-body-gap-x};
+    --aside-gap-y: 1.5rem;
+    --aside-head-gap-y: 1.25rem;
+    --aside-item-bubbly-radius: .5rem;
+    --aside-item-gap-y: .75rem;
+    --aside-item-active-bg:var(--#{$prefix}gray-100);
+    --border-color: #{$root-primary-100};
+    --content-bg: #{$root-body-bg};
+    [data-bs-theme=dark] & {
+        --aside-bg:var(--#{$prefix}gray-800);
+        --aside-item-active-bg:var(--#{$prefix}gray-900);
+        --border-color: var(--#{$prefix}border-color);
+    }
+    position: relative;
+    z-index: 999;
+    flex-grow: 1;
+    display: flex;
+    &-page{
+        flex-direction: column;
+    }
+    &-full-height{
+        height: var(--content-full-height);
+    }
+    &-inner{
+        flex-grow: 1;
+        padding: 2rem .5rem;
+        max-width: 100%;
+        min-width: var(--content-inner-width);
+    }
+}
+
+.tyn-main{
+    background: rgba(#{$root-body-bg-rgb}, var(--bs-bg-opacity,1));
+    &-boxed{
+        margin-left: auto;
+        margin-right: auto;
+        &-lg{
+            max-width: 780px !important;
+        }
+    }
+}
+
+.#{$app-prefix}aside-base + .#{$app-prefix}main{
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: var(--content-bg);
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    max-width: 100%;
+    flex-grow: 1;
+    opacity: 1;
+    visibility: hidden;
+    &.main-shown{
+        opacity: 1;
+        visibility: visible;       
+        z-index: 1000;
+    }
+    + .#{$app-prefix}overlay{
+        z-index: 1001;
+    }
+}
+
+@include media-breakpoint-up(md){
+    .#{$app-prefix}root{
+        --appbar-height: 73px;
+    }
+    .#{$app-prefix}content{
+        &.has-aside-base,&.has-aside-sticky{
+            --aside-width:320px;
+        }
+        
+        &-inner{
+            padding: 2rem 1.25rem;
+        }
+    }
+    .#{$app-prefix}aside-base{
+        + .#{$app-prefix}main{
+            position: static;
+            opacity: 1;
+            visibility: visible;
+            display: flex;  
+            overflow: hidden;
+        }
+    }
+}
+
+@include media-breakpoint-up(xxl){
+    .#{$app-prefix}content{
+        &.has-aside-base,&.has-aside-sticky{
+            --aside-width:360px;
+        }
+    }
+}

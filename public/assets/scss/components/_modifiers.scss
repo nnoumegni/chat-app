@@ -1,0 +1,13 @@
+.#{$app-prefix}pill{
+    --#{$app-prefix}shape: var(--#{$prefix}border-radius-pill);
+}
+.#{$app-prefix}circle{
+    --#{$app-prefix}shape: 50%;
+}
+
+@each $name, $value in $sizes {
+    .#{$app-prefix}size-#{$name}{
+        --#{$app-prefix}size: var(--#{$prefix}size-#{$name});
+        --#{$app-prefix}icon-size: var(--#{$prefix}icon-size-#{$name});
+    }
+}

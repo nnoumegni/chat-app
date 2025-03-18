@@ -5,12 +5,14 @@ import {CHAT_EVENT_NAME} from "../constants/api-configs";
 import {useFetchData} from "../api/fetch-data";
 
 export const UseSocketIo = () => {
-    const {user, socket, subscriptions, setIsConnected, setIsConnecting, setSubscriptions} = useAppStore();
+    const {user, socket, subscriptions, addMessage, setIsConnected, setIsConnecting, setSubscriptions} = useAppStore();
     const {handleApiCall} = useFetchData();
     const userId = user?.id;
 
     const emit = useCallback(({eventName, data}: {eventName: string; data: Message | JoinRoomPayload}) => {
-        socket.emit(eventName, data);
+        if(socket) {
+            socket.emit(eventName, data);
+        }
         return Promise.resolve({success: true});
     }, [socket]);
 
@@ -41,11 +43,22 @@ export const UseSocketIo = () => {
         });
     }
 
-    const subscribe = useCallback(({eventName, roomUris, callback}: {eventName: string; roomUris: string[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
+    const newMessageCallback = (message: Message) => {
+        console.log(message)
+        const {roomUri} = message;
+        let room; // = rooms.find(room => room.uri === roomUri);
+
+        addMessage({message});
+
+        if(room) {
+            const count = (room.unreadMessageCount || 0) + 1;
+            // setUnreadMessageCount({roomUri, count});
+        }
+    };
+
+    const subscribe = useCallback(({eventName, callback}: {eventName: string; callback: (payload: Message | User | JoinRoomPayload) => void}) => {
         subscriptions[eventName] = subscriptions[eventName] || [];
-        roomUris.forEach(roomUri => {
-            subscriptions[eventName].push({roomUri, callback})
-        });
+        subscriptions[eventName].push({callback})
 
         // Update the app subscriptions store
         setSubscriptions({subscriptions})
@@ -54,18 +67,16 @@ export const UseSocketIo = () => {
         return handleApiCall({
             path: 'chat',
             action: 'subscribe',
-            data: {eventName, roomUris, userId}
+            data: {eventName, userId}
         });
     }, [subscriptions]);
 
     // A user can have multiple subscriptions to the same event but with different callbacks
     // Make sure to unsubscribe only to the specified room with the same callback
-    const unsubscribe = useCallback(({eventName, roomUris, callback}: {eventName: string; roomUris: string[], callback: (payload: Message | User | JoinRoomPayload) => void}) => {
-        roomUris.forEach(uri => {
-            subscriptions[eventName] = (subscriptions[eventName] || []).filter(sub => {
-                const {callback: cb, roomUri} = sub;
-                return !(cb === callback && uri === roomUri)
-            });
+    const unsubscribe = useCallback(({eventName, callback}: {eventName: string; callback: (payload: Message | User | JoinRoomPayload) => void}) => {
+        subscriptions[eventName] = (subscriptions[eventName] || []).filter(sub => {
+            const {callback: cb} = sub;
+            return cb !== callback;
         });
 
         return Promise.resolve({success: true});
@@ -77,6 +88,7 @@ export const UseSocketIo = () => {
         onDisconnect,
         onChat,
         onRoomJoin,
+        newMessageCallback,
         subscribe,
         unsubscribe
     }

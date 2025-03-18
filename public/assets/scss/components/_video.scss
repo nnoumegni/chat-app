@@ -1,0 +1,66 @@
+.#{$app-prefix}image{
+    width: 100%;
+    border-radius: var(--#{$prefix}border-radius);
+}
+
+.#{$app-prefix}video{
+    --#{$app-prefix}icon-color: var(--#{$prefix}white);
+    --#{$app-prefix}icon-size: 1.75rem;
+    --video-border-color: var(--#{$prefix}gray-200);
+    [data-bs-theme="dark"] &{
+        --video-border-color: var(--#{$prefix}gray-700);
+    }
+    display: flex;
+    position: relative;
+    border: 1px solid var(--video-border-color);
+    border-radius: var(--#{$prefix}border-radius);
+    &-icon{
+        position: absolute;
+        color: var(--#{$app-prefix}icon-color);
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%,-50%);
+        height: var(--#{$app-prefix}icon-size);
+        width: var(--#{$app-prefix}icon-size);
+        svg,.icon{
+            height: 100%;
+            width: 100%;
+        }
+    }
+}
+
+.#{$app-prefix}thumb{
+    --image-border-color: var(--#{$prefix}gray-200);
+    [data-bs-theme="dark"] &{
+        --image-border-color: var(--#{$prefix}gray-700);
+    }
+    display: inline-block;
+    border: 1px solid var(--image-border-color);
+    border-radius: var(--#{$prefix}border-radius);
+}
+
+.#{$app-prefix}video{
+    --#{$app-prefix}icon-color: var(--#{$prefix}white);
+    --#{$app-prefix}icon-size: 1.75rem;    
+    --video-border-color: var(--#{$prefix}gray-200);
+    [data-bs-theme="dark"] &{
+        --video-border-color: var(--#{$prefix}gray-700);
+    }
+    display: flex;
+    position: relative;
+    border: 1px solid var(--video-border-color);
+    border-radius: var(--#{$prefix}border-radius);
+    &-icon{
+        position: absolute;
+        color: var(--#{$app-prefix}icon-color);
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%,-50%);
+        height: var(--#{$app-prefix}icon-size);
+        width: var(--#{$app-prefix}icon-size);
+        svg,.icon{
+            height: 100%;
+            width: 100%;
+        }
+    }
+}

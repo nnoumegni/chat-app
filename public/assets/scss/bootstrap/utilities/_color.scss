@@ -1,0 +1,23 @@
+[data-bs-theme="dark"]{
+    .bg-white {
+        background-color: rgba(to-rgb($gray-800-dark),var(--bs-bg-opacity)) !important;
+    }
+    .bg-light {
+        background-color: rgba(to-rgb($gray-700-dark),var(--bs-bg-opacity)) !important;
+    }
+    .border-white {
+        border-color: rgba(to-rgb($gray-800-dark),var(--bs-border-opacity)) !important;
+    }
+    .border-light {
+        border-color: rgba(to-rgb($gray-700-dark),var(--bs-border-opacity)) !important;
+    }
+    .text-dark {
+        color: rgba(to-rgb($white),var(--bs-text-opacity)) !important;
+    }
+    .link-secondary{
+        color: var(--#{$prefix}gray-200) !important;
+        &:hover{
+            color: var(--#{$prefix}white) !important;
+        }
+    }
+}

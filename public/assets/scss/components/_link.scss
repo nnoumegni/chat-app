@@ -1,0 +1,28 @@
+.link{
+    --color: var(--#{$prefix}gray-500);
+    --hover-color: var(--#{$prefix}primary);
+    [data-bs-theme="dark"] &{
+        
+    }
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap:.375rem;
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--color);
+    transition: .3s ease;
+    border: none;
+    background-color: transparent;
+    padding: 0;
+    &:hover,&:focus{
+        color: var(--hover-color);
+    }
+    &-group{
+        display: flex;
+        align-items: center;
+        > li, > div{
+            display: inline-flex;
+        }
+    }
+}

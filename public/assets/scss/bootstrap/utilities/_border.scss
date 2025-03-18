@@ -1,0 +1,28 @@
+$utilities: map-merge(
+  $utilities, (
+    "border": map-merge( map-get($utilities, "border"),( responsive: true ),),
+    "border-top": map-merge( map-get($utilities, "border-top"),( responsive: true ),),
+    "border-end": map-merge( map-get($utilities, "border-end"),( responsive: true ),),
+    "border-bottom": map-merge( map-get($utilities, "border-bottom"),( responsive: true ),),
+    "border-start": map-merge( map-get($utilities, "border-start"),( responsive: true ),),
+    "border-width": map-merge( map-get($utilities, "border-width"),( responsive: true ),),
+    "border-opacity": (
+      css-var: true,
+      class: border-opacity,
+      values: (
+        10: .1,
+        20: .20,
+        25: .25,
+        30: .30,
+        40: .40,
+        50: .5,
+        60: .6,
+        70: .7,
+        75: .75,
+        80: .8,
+        90: .9,
+        100: 1
+      )
+    ),
+  )
+);

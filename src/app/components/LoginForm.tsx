@@ -38,6 +38,7 @@ export const LoginForm = ({toggleForm}) => {
                 action: 'doLogin',
                 data: {username, token}
             }).then(({user}) => {
+                console.log(user)
                 if (user) {
                     setUser({user});
                     setIsAuthenticated({isAuthenticated: true});

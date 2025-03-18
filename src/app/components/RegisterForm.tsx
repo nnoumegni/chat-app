@@ -4,24 +4,24 @@ import {useAppStore} from "../store/use-app.store";
 
 export const RegisterForm = ({toggleForm}) => {
     const usernameInput = useRef();
-    const fullNameInput = useRef();
+    const fullnameInput = useRef();
     const passwordInput = useRef();
     const { loading, error, data, handleApiCall } = useFetchData();
     const {setUser, setIsAuthenticated} = useAppStore();
 
     const submitHandler = useCallback((evt) => {
         evt.preventDefault();
-        const {value: fullName} = fullNameInput.current;
+        const {value: fullname} = fullnameInput.current;
         const {value: username} = usernameInput.current;
         const {value: password} = passwordInput.current;
 
-        if(!(username && password && fullName)) { return; }
+        if(!(username && password && fullname)) { return; }
 
         handleApiCall({
             path: 'account',
             action: 'doRegister',
             token: `${new Date().getTime()}`,
-            data: {fullName, username, password}
+            data: {fullname, username, password}
         }).then((resp) => {
             const {success, user} = resp;
             if(success) {
@@ -45,7 +45,7 @@ export const RegisterForm = ({toggleForm}) => {
                         Full Name
                     </label>
                     <input
-                        ref={fullNameInput}
+                        ref={fullnameInput}
                         className="px-4 py-3.5 bg-white w-full text-sm border-2 border-gray-200 focus:border-blue-600 rounded-md outline-none ng-untouched ng-pristine ng-invalid"
                         placeholder="Your Full Name..." type="text"/>
                 </div>

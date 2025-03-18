@@ -54,7 +54,7 @@ export const ChatMessages = () => {
         evt.preventDefault();
 
         const {uri: roomUri} = selectedRoom;
-        const roomUser: RoomUser = {userId: user.id, fullName: user.fullName};
+        const roomUser: RoomUser = {userId: user.id, fullname: user.fullname};
         // return console.log(roomUser);
         return Promise.all([
             handleApiCall({path: 'chat', action: 'addRoomUser', data: {roomUri, user: roomUser}}),
@@ -156,7 +156,7 @@ export const ChatMessages = () => {
             const sortedIds = [dmUser.userId, user.id].sort();
             const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
             const roomUri = `${uniqueDmRoomUri}`;
-            const roomUser: RoomUser = {userId: user.id, fullName: user.fullName};
+            const roomUser: RoomUser = {userId: user.id, fullname: user.fullname};
             const room: AddRoom = {addedBy: user.id, users: [roomUser, dmUser], roomUri, type: 'dm', active: 0};
 
             handleApiCall({path: 'chat', action: 'addRoom', token: `${new Date().getTime()}`, data: room}).then(({success, room: dmRoom}) => {
@@ -264,20 +264,20 @@ export const ChatMessages = () => {
                                     <ul id="dropdownMenu"
                                         className="absolute top-[100%] block shadow-lg shadow-blue-100 bg-white py-4 z-[1000] min-w-full w-max rounded max-h-96 overflow-auto">
                                         {roomUsers.map((user: RoomUser, idx) => {
-                                            const {fullName, isConnected} = user;
+                                            const {fullname, isConnected} = user;
                                             return (
                                                 <li
                                                     key={idx} className="py-3 px-4 flex items-center hover:bg-blue-50 text-black text-sm cursor-pointer"
                                                     onClick={() => handleToggleMessagingType(true, user)}
                                                 >
-                                                    <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={fullName}/>
+                                                    <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={fullname}/>
                                                     <div className="inline-flex items-center justify-start">
                                                         {isConnected && (
                                                             <div className="mr-1">
                                                                 <IconConnected/>
                                                             </div>
                                                         )}
-                                                        <span>{fullName}</span>
+                                                        <span>{fullname}</span>
                                                     </div>
                                                 </li>
                                             )
@@ -292,10 +292,10 @@ export const ChatMessages = () => {
                                 onClick={() => handleToggleMessagingType(false)}
                             >
                                 <div className="relative flex items-center justify-start">
-                                    <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={dmUser?.fullName}/>
+                                    <img src="assets/profile.jpg" className="w-8 h-8 rounded-full shrink-0 mr-3" alt={dmUser?.fullname}/>
                                 </div>
                                 <div className="ml-1 capitalize" onClick={handleShowUserInfo}>
-                                    <div>{dmUser?.fullName}</div>
+                                    <div>{dmUser?.fullname}</div>
                                     <div className="text-xs text-gray-500 font-[300]">View user info</div>
                                 </div>
                             </div>
@@ -338,7 +338,7 @@ export const ChatMessages = () => {
                                             <div className="flex flex-wrap items-center cursor-pointer shadow-[0_2px_6px_-1px_rgba(0,0,0,0.3)]  w-full p-4">
                                                 <img src="assets/profile.jpg" className="w-10 h-10 rounded-full" alt={text}/>
                                                 <div className="ml-4 flex-1">
-                                                    <p className="text-sm text-gray-800 font-semibold capitalize">{sender?.fullName}</p>
+                                                    <p className="text-sm text-gray-800 font-semibold capitalize">{sender?.fullname}</p>
                                                     <p className="text-xs text-gray-500 mt-0.5">{text}</p>
                                                 </div>
                                             </div>

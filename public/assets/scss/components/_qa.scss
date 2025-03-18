@@ -1,0 +1,76 @@
+$qa-base: #{$app-prefix}qa;
+
+.#{$qa-base}{
+    --qa-bg: var(--#{$prefix}white);
+    --qa-bg-human: var(--#{$prefix}primary-50);
+    --qa-sap-color: var(--#{$prefix}primary-100);
+    [data-bs-theme="dark"] &{
+        --qa-bg: var(--#{$prefix}gray-800);
+        --qa-bg-human: var(--#{$prefix}gray-700);
+        --qa-sap-color: var(--#{$prefix}gray-700);
+    }
+    &-avatar{
+        display: inline-flex;
+        flex-shrink: 0;
+        flex-direction: column;
+    }
+    &-item{
+        display: flex;
+        justify-content: stretch;
+        gap: 1rem;
+        padding: 1.25rem;
+        &:nth-child(odd){
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--qa-bg-human);
+            border-top: 1px solid var(--qa-sap-color);
+            border-bottom: 1px solid var(--qa-sap-color);
+            &:first-child{
+                border-top:none;
+            }
+        }
+        &:nth-child(even){
+            position: relative;
+            background: var(--qa-bg);
+            .#{$qa-base}-avatar .#{$qa-base}-avatar-wrap{
+                position: sticky;
+                top: 0;
+            }
+        }
+    }
+    &-message{
+        padding: .25rem 0;
+        flex-grow: 0;
+        width: calc(100% - 50px);
+    }
+}
+
+.#{$qa-base}{
+    --qa-bubbly-gap: 1rem;
+    &-bubbly{
+        display: flex;
+        flex-direction: column;
+        gap: var(--qa-bubbly-gap);
+    } 
+    &-item{
+        .#{$qa-base}-bubbly &{
+            padding: 0;
+            position: relative !important;
+            background: transparent !important;
+            border:none !important;
+        }
+    }
+    &-message{
+        .#{$qa-base}-bubbly & {
+            border-radius: .25rem .5rem .5rem;
+            padding: 1.25rem;
+        }
+        .#{$qa-base}-bubbly .#{$qa-base}-item:nth-child(odd) & {
+            background: var(--qa-bg-human);
+        }
+        .#{$qa-base}-bubbly .#{$qa-base}-item:nth-child(even) & {
+            background: var(--qa-bg);
+        }
+    }
+}
