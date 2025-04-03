@@ -1,7 +1,7 @@
 import {useState} from "react";
 import axios from "axios";
-import {HmacSHA256, enc, AES} from "crypto-js";
-import {AddRoom, ApiRequest, ApiResponse, Message, Room, RoomUser, UpdateRoom, User} from "../models/chat-models";
+import {enc, HmacSHA256} from "crypto-js";
+import {AddRoom, ApiRequest, ApiResponse, Message, Room, RoomUser, UpdateRoom} from "../models/chat-models";
 import {IndexedDB} from "./indexedbd";
 import {
     BACKEND_URL,
@@ -85,6 +85,7 @@ export const useFetchData = () => {
 
     const getRooms = async (filters): Promise<Room[]> => {
         const idb = new IndexedDB(ROOMS_DB_NAME);
+
         // Important: this prevent from listing all the rooms in the DB
         if(!(filters && Object.keys(filters).length)) {
             return []
@@ -95,27 +96,34 @@ export const useFetchData = () => {
         return (await idb.findItems({filters})) as Room[];
     }
 
-    const addRoom = async ({name, addedBy, users: roomUsers, roomUri, type}: AddRoom) => {
+    const addRoom = async ({name, addedBy, users, roomUri, type}: AddRoom) => {
         const idb = new IndexedDB(ROOMS_DB_NAME);
-        const uri = roomUri || `${crypto.randomUUID()}-${addedBy}`;
+        roomUri = roomUri || `${crypto.randomUUID()}-${addedBy}`;
 
-
-        // Note: saving users as hashMap will perform well during lookup
-        const users = {};
-        if (roomUsers && roomUsers[0]) {
-            for (let i = 0; i < roomUsers.length; i++) {
-                const user = roomUsers[i];
-                users[user.userId] = user;
-            }
-        }
-
-        const newRoomData = {name, addedBy, uri, type, users};
+        const newRoomData = {name, addedBy, roomUri, type, users};
 
         // Set the table name and the search index field
         await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        const {success, exists} = await idb.addIfNotExist({uri}, newRoomData);
+        const {success, exists} = await idb.addIfNotExist({roomUri}, newRoomData);
 
         if(success) {
+            if(exists) {
+                const filters = {
+                    roomUri: {value: roomUri, operator: '$not'}
+                };
+
+                // Move the room to the top (in desc order)
+                getRooms(filters).then(rooms => {
+                    // console.log(rooms, filters);
+                    const others = rooms.filter((room) => {
+                        // console.log({exists}, room.roomUri, roomUri);
+                        return room.roomUri !== roomUri
+                    });
+                    // idb.setItems([...others, newRoomData]);
+                }, (e) => {
+                    console.log(e);
+                });
+            }
             return {success, exists, room: newRoomData};
         }
 
@@ -126,7 +134,7 @@ export const useFetchData = () => {
         const idb = new IndexedDB(ROOMS_DB_NAME);
         // Set the table name and the search index field
         await idb.setup(ROOMS_TABLE_NAME, [NAME_INDEX_FIELDS]);
-        return await idb.addOrUpdate({uri: roomUri}, data);
+        return await idb.addOrUpdate({roomUri}, data);
     }
 
     const getRoomUsers = async ({roomUri, userIds, callback}: {roomUri: string; userIds?: number[], callback?: (connectedUsers: number[]) => void}) => {
@@ -198,7 +206,7 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
-
+console.log({message})
         const {success} = idb.setItems([message]);
         if(success) {
             return updateRoom({roomUri, data: {active: 1}})
@@ -232,7 +240,7 @@ export const useFetchData = () => {
             path: 'account',
             action: 'doProxyAuth',
             token,
-            data: {doLogin: 1, username, password, token}
+            data: {doLogin: 1, username, password, token, skipBalance: true}
         };
 
         const encryptedData =  Utils.aes(params); //  CryptoJS.AES.encrypt(JSON.stringify(params), params.token, {}).toString();
@@ -241,13 +249,16 @@ export const useFetchData = () => {
             token
         };
 
-        return runChatAction({path: 'auth', data: reqData}).then(resp => {
-            const {success, user} = resp || {};
-            if(user) {
-                const authData = JSON.stringify({username, token, user});
-                localStorage.setItem("authData", authData);
+        return runChatAction({path: 'scrud', data: reqData}).then(resp => {
+            const {success, account} = resp || {};
+            if(account) {
+                const {id, profileImage: thumb, fullname} = account;
+                Utils.setSessionData({account});
+                return {
+                    user: {id, thumb, fullname}
+                };
             }
-            return resp;
+            return {success: false};
         });
 
         /*
@@ -311,6 +322,7 @@ export const useFetchData = () => {
             setData(data);
             return data;
         }, (error) => {
+            console.log(error)
             setLoading(false);
             setError(error);
         });

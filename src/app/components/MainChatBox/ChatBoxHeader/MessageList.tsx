@@ -4,6 +4,8 @@ import {useEffect} from "react";
 import {useAppStore} from "../../../store/use-app.store";
 import DOMPurify from "dompurify";
 import SimpleBar from "simplebar";
+import {Avatar, MessageBox} from "react-chat-elements";
+import {Utils} from "../../../helpers/utils";
 
 const SafeHtmlRenderer = ({ html }: { html: string }) => {
     const sanitizedHtml = DOMPurify.sanitize(html);
@@ -11,7 +13,7 @@ const SafeHtmlRenderer = ({ html }: { html: string }) => {
 };
 
 export const MessageList = ({userMap}) => {
-    const {isConnected, selectedRoom, messages} = useAppStore();
+    const {user, isConnected, selectedRoom, messages} = useAppStore();
     const {subscribe, unsubscribe} = UseSocketIo();
 
     const {uri: roomUri, type} = selectedRoom || {};
@@ -32,13 +34,32 @@ export const MessageList = ({userMap}) => {
     return (
         <>
             {messages.map((message: Message, idx) => {
-                const {text} = message;
+                const {text, sender} = message;
+                const {fullname, thumb, userId} = sender || {};
+                const fromMe = userId === user.id;
+                const position = fromMe ? 'right' : 'left';
+                const title = fromMe ? '' : fullname;
+                const avatar = thumb && /^http/gi.test(thumb) ? thumb : Utils.thumbFromInitials({fullName: fullname});
                 return (
                     <div key={idx} className="tyn-reply-item outgoing">
-                        <div className="tyn-reply-group">
-                            <div className="tyn-reply-bubble">
-                                <div className="tyn-reply-text">
-                                    <SafeHtmlRenderer html={text} />
+
+                        <div className={`tyn-reply-group w-full`} style={{alignItems: `${!fromMe ? 'items-start' : ''}`}}>
+                            <div className={`tyn-reply-bubble w-full flex-1 ${!fromMe ? 'flex-row justify-start self-start' : ''}`}>
+                                <div className={`flex w-full ${fromMe ? 'flex-row-reverse items-start justify-end' : 'flex items-start justify-start'}`}>
+                                    <Avatar src={avatar} type={'rounded'}/>
+                                    <MessageBox
+                                        position={position}
+                                        type={'text'}
+                                        text={text}
+                                        title={title}
+                                        data={{
+                                            uri: 'https://facebook.github.io/react/img/logo.svg',
+                                            status: {
+                                                click: false,
+                                                loading: 0,
+                                            },
+                                        }}
+                                    />
                                 </div>
                                 <ul className="tyn-reply-tools">
                                     <li>

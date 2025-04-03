@@ -5,7 +5,6 @@ import {useAppStore} from "../store/use-app.store";
 export const LoginForm = ({toggleForm}) => {
     const usernameInput = useRef();
     const passwordInput = useRef();
-    const [enableAutoLogin, setEnableAutoLogin] = useState(false);
     const { loading, error, data, handleApiCall } = useFetchData();
     const {setUser, setIsAuthenticated} = useAppStore();
 
@@ -27,24 +26,6 @@ export const LoginForm = ({toggleForm}) => {
                 setIsAuthenticated({isAuthenticated: true});
             }
         })
-    }, []);
-
-    useEffect(() => {
-        const authData = localStorage.getItem('authData');
-        if(authData && enableAutoLogin) {
-            const {username, token} = JSON.parse(authData);
-            handleApiCall({
-                path: 'account',
-                action: 'doLogin',
-                data: {username, token}
-            }).then(({user}) => {
-                console.log(user)
-                if (user) {
-                    setUser({user});
-                    setIsAuthenticated({isAuthenticated: true});
-                }
-            });
-        }
     }, []);
 
     return (

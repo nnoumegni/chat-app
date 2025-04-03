@@ -12,7 +12,7 @@ export const ChatBoxFooter = () => {
     const {user, selectedRoom, addMessage, rooms, addRoom, setRooms} = useAppStore();
     const {emit, subscribe, unsubscribe} = UseSocketIo();
     const {handleApiCall} = useFetchData();
-    const {uri: roomUri} = selectedRoom || {};
+    const {roomUri} = selectedRoom || {};
     const inputEltRef = useRef();
 
     const handleInputKeyUp = (event: KeyboardEvent) => {
@@ -27,10 +27,10 @@ export const ChatBoxFooter = () => {
     const saveMessage = useCallback((inputText) => {
         const text = inputText && inputText.trim() ? inputText.trim() : '';
         if(text) {
-            const {id: userId, fullname} = user;
-            const sender = {userId, fullname};
+            const {id: userId, fullname, thumb} = user;
+            const sender = {userId, fullname, thumb};
             const date = new Date().toISOString();
-            const currentRoomUri = (roomUri || uri);
+            const currentRoomUri = roomUri;
             const msgUri = `${userId}${currentRoomUri}${new Date().getTime()}`;
             const {type, users} = selectedRoom;
 
@@ -44,14 +44,18 @@ export const ChatBoxFooter = () => {
 
             const newMessage = {...message, ...{sender, receiver}};
 
+            console.log(newMessage, selectedRoom);
+
             // Append the message to the message list
             // Make sure to handle duplicate from the chat event handler
             addMessage({message: newMessage});
+            addRoom({room: selectedRoom});
 
             // Immediately broadcast the message
             // Persist the message to the DB
             Promise.all([
                 handleApiCall({path: 'chat', action: 'addMessage', data: {message: newMessage}}),
+                handleApiCall({path: 'chat', action: 'addRoom', data: selectedRoom}),
                 emit({eventName: CHAT_EVENT_NAME, data: newMessage}),
             ]).then(() => {
                 // move the new room to the top
@@ -71,18 +75,19 @@ export const ChatBoxFooter = () => {
     }, [selectedRoom]);
 
     const newMessageCallback = async (message: Message) => {
+        return;
         const {userId, type, sender, receiver, roomUri} = message;
         const moveToTheTop = (room) => {
             const newRooms = Utils.addOrMoveArrayItem({
                 arr: rooms,
-                matchData: {uri: roomUri},
+                matchData: {roomUri},
                 new_index: 0,
                 item: room
             });
 
-            setRooms({rooms: newRooms});
+            // setRooms({rooms: newRooms});
         }
-
+console.log(message)
         // Persist the message to my local chat history DB
         await handleApiCall({path: 'chat', action: 'addMessage', data: message});
 
@@ -105,7 +110,7 @@ export const ChatBoxFooter = () => {
             const addRoomSuccess = await handleApiCall({path: 'chat', action: 'addRoom', data: newRoom});
 
             // Move the room to the top in the left nav
-            moveToTheTop(newRoom);
+            // moveToTheTop(newRoom);
 
             // If the room is not currently open,
             // increment the un-red msg count

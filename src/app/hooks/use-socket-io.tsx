@@ -1,24 +1,31 @@
-import {useCallback} from "react";
+import {useCallback, useEffect} from "react";
 import {useAppStore} from "../store/use-app.store";
 import {JoinRoomPayload, Message, RoomUser, User} from "../models/chat-models";
 import {CHAT_EVENT_NAME} from "../constants/api-configs";
 import {useFetchData} from "../api/fetch-data";
+import {Utils} from "../helpers/utils";
 
 export const UseSocketIo = () => {
-    const {user, socket, subscriptions, addMessage, setIsConnected, setIsConnecting, setSubscriptions} = useAppStore();
+    const {user, socket, selectedRoom, addRoom, setSocket, subscriptions, addMessage, setIsConnected, setIsConnecting, setSubscriptions} = useAppStore();
     const {handleApiCall} = useFetchData();
     const userId = user?.id;
 
     const emit = useCallback(({eventName, data}: {eventName: string; data: Message | JoinRoomPayload}) => {
         if(socket) {
-            socket.emit(eventName, data);
+            socket.emit('broadcast', {
+                eventName,
+                payload: data
+            });
         }
+
         return Promise.resolve({success: true});
     }, [socket]);
 
-    const onConnect = () => {
+    const onConnect = (socket) => {
         setIsConnected({isConnected: true});
         setIsConnecting({isConnecting: false});
+        setSocket({socket});
+        subscribe({eventName: CHAT_EVENT_NAME, callback: newMessageCallback}).then();
     }
 
     const onDisconnect = () => {
@@ -44,16 +51,62 @@ export const UseSocketIo = () => {
     }
 
     const newMessageCallback = (message: Message) => {
-        console.log(message)
-        const {roomUri} = message;
+        const {roomUri, sender, receiver, type} = message;
         let room; // = rooms.find(room => room.uri === roomUri);
+        // Append the message to the message list
+        // Make sure to handle duplicate from the chat event handler
+        if(sender && sender.userId !== user.id) {
+            addMessage({message});
 
-        addMessage({message});
+            if(type === 'dm') {
+                const {userId: senderId, fullname: senderFullName, thumb: senderThumb} = sender;
+                const {userId: receiverId, fullname: receiverFullName, thumb: receiverThumb} = receiver;
+                const room = Utils.roomUserMapper({
+                    currentUser: {
+                        id: receiverId,
+                        fullname: receiverFullName,
+                        thumb: receiverThumb
+                    },
+                    user: {
+                        id: senderId,
+                        fullname: senderFullName,
+                        thumb: senderThumb
+                    }
+                });
+
+                addRoom({room});
+
+                Promise.all([
+                    handleApiCall({path: 'chat', action: 'addMessage', data: {message}}),
+                    handleApiCall({path: 'chat', action: 'addRoom', data: room}),
+                ]).then(() => {
+                    // move the new room to the top
+                    if(room.roomUri !== (selectedRoom || {}).roomUri) {
+                        // const count = (room.unreadMessageCount || 0) + 1;
+                        // setUnreadMessageCount({roomUri, count});
+                    }
+                });
+            }
+        }
+
+        /*
+
+
+        // Immediately broadcast the message
+        // Persist the message to the DB
+        Promise.all([
+            handleApiCall({path: 'chat', action: 'addMessage', data: {message: newMessage}}),
+            handleApiCall({path: 'chat', action: 'addRoom', data: selectedRoom}),
+            emit({eventName: CHAT_EVENT_NAME, data: newMessage}),
+        ]).then(() => {
+            // move the new room to the top
+        });
 
         if(room) {
             const count = (room.unreadMessageCount || 0) + 1;
             // setUnreadMessageCount({roomUri, count});
         }
+         */
     };
 
     const subscribe = useCallback(({eventName, callback}: {eventName: string; callback: (payload: Message | User | JoinRoomPayload) => void}) => {

@@ -1,10 +1,14 @@
 import {DmRoom, Room, RoomUser, User} from "../models/chat-models";
 import * as CryptoJS from 'crypto-js';
 import {Storage} from "../api/storage";
+import ColorHash from './../../../public/assets/static/color-hash';
 import {findIndex} from 'lodash';
+import {IconUsers} from "../components/Icons";
+import {StorageService} from "./storage.service";
 
 export class Utils {
     static browserDeviceIdStorageKey = 'buuid' ;
+    static storageService = new StorageService();
 
     static platform = {
         is: (type = '') => false
@@ -33,6 +37,9 @@ export class Utils {
             }
 
             room.name = dmUser.fullname;
+            room.thumb = dmUser.thumb;
+        } else {
+            room.thumb = IconUsers({type: 'string'}) as string;
         }
 
         return room;
@@ -196,17 +203,24 @@ export class Utils {
     }
 
     static roomUserMapper({user, currentUser}: {user: User, currentUser: User}): DmRoom & {uri: string} {
-            const {id, fullname} = user;
+            const {id, fullname, thumb} = user;
             const dmUserId = id as number;
             const currentUserId = currentUser.id as number;
             const dmUser = {
                 userId: dmUserId,
-                fullname
+                fullname,
+                thumb
             };
 
             const me = {
                 userId: currentUser.id as number,
-                fullname: currentUser.fullname
+                fullname: currentUser.fullname,
+                thumb: currentUser.thumb
+            }
+
+            const users: any = {
+                [currentUser.id]: me,
+                [dmUserId]: dmUser
             }
 
             const uri = this.getDmRoomUri({dmUser, currentUser: me});
@@ -215,16 +229,14 @@ export class Utils {
                 name: fullname,
                 uri,
                 roomUri: uri,
-                users: [dmUser, me],
+                users,
                 addedBy: currentUserId,
-                type: 'dm'
+                type: 'dm',
+                thumb
             }
     }
 
     static getDmRoomUri({dmUser, currentUser}) {
-        if(!dmUser) {
-            debugger;
-        }
         const sortedIds = [dmUser.userId, currentUser.userId].sort();
         const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
         return `${uniqueDmRoomUri}`;
@@ -241,4 +253,73 @@ export class Utils {
 
         return arr;
     };
+
+    static async getSessionData() {
+        return Promise.all([
+            this.storageService.get('sessionInfoStr'),
+            this.storageService.get('selectedOrg')
+        ]).then(([sessionInfoStr, selectedOrg]) => {
+            if(!sessionInfoStr) {
+                return {};
+            }
+
+            const sessionInfo = !!sessionInfoStr ? JSON.parse(sessionInfoStr) : {};
+            const {id, profileImage: thumb, fullname} = sessionInfo;
+            const memberID = !!sessionInfo ? parseInt(sessionInfo.id, 10) : 0;
+            const token = !!sessionInfo ? sessionInfo.token : '';
+            return {
+                memberID,
+                user: {id, thumb, fullname},
+                token,
+                orgSettings: selectedOrg
+            };
+        });
+    }
+
+    static async setSessionData({account}) {
+        return this.storageService.set('sessionInfoStr', JSON.stringify(account))
+    }
+
+    static getTextToColor = (str) => {
+        const colorHash = new ColorHash({
+            lightness: 0.4, saturation: 0.9
+        });
+        return colorHash.hex(`${str}`);
+    }
+
+    static thumbFromInitials({fullName = ''} = {}) {
+
+        const thumbSize = 50;
+        const splits = fullName.split(' ').filter(x => !!x && !!x.trim());
+        if (!(splits && splits[0])) { return; }
+        const initials = splits.length > 1 ? `${splits[0][0]}${splits[1][0]}` : `${splits[0][0]}${splits[0][1] || splits[0][0]}`;
+
+        const svg = `<svg width="${thumbSize}" height="${thumbSize}">
+            <rect x="0" y="0" width="${thumbSize}" height="${thumbSize}" fill="${this.getTextToColor(fullName)}"/>
+            <text
+              x="50%"
+              y="50%"
+              dominant-baseline="middle"
+              text-anchor="middle"
+              fill="#ffffff"
+              style="text-align: center;border-radius: 100%;text-transform: uppercase;color: rgb(255, 255, 255);background-color: rgb(231, 76, 60);font: 1.3em / 40px Helvetica, Arial, sans-serif;font-weight: bold;"
+            >${initials.toUpperCase()}</text>
+        </svg>`;
+
+        const encodeSvg = (svgString) => {
+            return 'data:image/svg+xml,' + svgString.replace('<svg', (~svgString.indexOf('xmlns') ? '<svg' : '<svg xmlns="http://www.w3.org/2000/svg"'))
+
+                .replace(/"/g, '\'')
+                .replace(/%/g, '%25')
+                .replace(/#/g, '%23')
+                .replace(/{/g, '%7B')
+                .replace(/}/g, '%7D')
+                .replace(/</g, '%3C')
+                .replace(/>/g, '%3E')
+
+                .replace(/\s+/g, ' ');
+        };
+
+        return encodeSvg(svg);
+    }
 }

@@ -25,7 +25,10 @@ export const ChatBox = () => {
     // Set room messages
     useEffect(() => {
         // Init lightbox library
-        const lightbox = GLightbox({});
+        let lightbox;
+        import('glightbox').then(({ default: GLightbox }: any) => {
+            lightbox = GLightbox({});
+        });
 
         if(selectedRoom && isRoomUser) {
             const {roomUri, uri} = selectedRoom;
@@ -58,7 +61,9 @@ export const ChatBox = () => {
         }
 
         return () => {
-            lightbox.destroy();
+            if(lightbox) {
+                lightbox.destroy();
+            }
         };
 
     }, dependencies);
@@ -66,6 +71,7 @@ export const ChatBox = () => {
     // Set room access permission
     useEffect(() => {
         if(selectedRoom) {
+            console.log({selectedRoom});
             const isDirectMessaging = selectedRoom.type === 'dm';
             const {id: currentUser} = user;
             const setChatUser = (userData) => {
@@ -93,6 +99,7 @@ export const ChatBox = () => {
                 setIsRoomUser(true);
             } else {
                 // If it's not a DM, check if I'm part of that room first
+                /*
                 getRoomUsers([currentUser]).then(userData => {
                     const keys = Object.keys(userData).map(key => parseInt(key, 10));
                     const isChatRoomUser = keys.map(key => {
@@ -103,8 +110,21 @@ export const ChatBox = () => {
                         setChatUser(userData);
                     }
 
+                    console.log({isChatRoomUser});
+
                     setIsRoomUser(isChatRoomUser);
                 });
+                */
+                const keys = Object.keys(selectedRoom.users).map(key => parseInt(key, 10));
+                const chatRoomUser = keys.map(key => {
+                    return selectedRoom.users[key];
+                });
+
+                if (!!chatRoomUser) {
+                    setChatUser(chatRoomUser);
+                }
+
+                setIsRoomUser(!!chatRoomUser);
             }
         }
     }, [selectedRoom]);

@@ -4,6 +4,7 @@ import {io} from "socket.io-client";
 import {BACKEND_URL, CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../constants/api-configs";
 import {UseSocketIo} from "../hooks/use-socket-io";
 import {MainChatBox} from "../components/MainChatBox";
+import 'react-chat-elements/dist/main.css';
 
 export const AuthLayout = () => {
     const {user, setSocket, isConnected, deviceId, setThemeMode} = useAppStore();
@@ -14,22 +15,18 @@ export const AuthLayout = () => {
     // To prevent unexpected server overload
     useEffect(() => {
         if(deviceId) {
+            console.log('herereer...');
             const socket: any = io(BACKEND_URL, {query: {userId, deviceId}});
 
             // Set socket event callbacks
-            socket.on('connect', onConnect);
+            socket.on('connect', onConnect.bind(null, socket));
             socket.on('disconnect', onDisconnect);
             socket.on(CHAT_EVENT_NAME, onChat);
             socket.on(CHAT_ROOM_JOIN_EVENT_NAME, onRoomJoin);
 
-            if (isConnected) {
-                setSocket({socket});
-                subscribe({eventName: CHAT_EVENT_NAME, callback: newMessageCallback}).then();
-            }
-
             // Clean up when unmounted
             return () => {
-                socket.off('connect', onConnect);
+                socket.off('connect', onConnect.bind(null, socket));
                 socket.off('disconnect', onDisconnect);
                 socket.off(CHAT_EVENT_NAME, onChat);
                 socket.off(CHAT_ROOM_JOIN_EVENT_NAME, onRoomJoin);
@@ -42,7 +39,7 @@ export const AuthLayout = () => {
             document.documentElement.setAttribute("data-bs-theme", themeMode);
             setThemeMode({themeMode});
         }
-    }, [isConnected, deviceId]);
+    }, [deviceId]);
 
     return <MainChatBox/>
 }

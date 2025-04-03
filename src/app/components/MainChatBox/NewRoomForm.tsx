@@ -15,7 +15,8 @@ export const NewRoomForm = ({handleRoomClick}) => {
 
         if(name && name.trim()) {
             const roomUser: RoomUser = {userId: user.id, fullname: user.fullname};
-            const room: AddRoom = {name, addedBy: user.id, users: [roomUser], active: 1};
+            const users: any = {[user.id]: roomUser};
+            const room: AddRoom = {name, addedBy: user.id, users, active: 1};
 
             handleApiCall({
                 path: 'chat',

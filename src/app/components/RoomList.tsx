@@ -1,4 +1,4 @@
-import {useCallback, useEffect} from "react";
+import React, {useCallback, useEffect} from "react";
 import {useFetchData} from "../api/fetch-data";
 import {useAppStore} from "../store/use-app.store";
 import {Message, Room} from "../models/chat-models";
@@ -7,6 +7,7 @@ import {UseSocketIo} from "../hooks/use-socket-io";
 import {CHAT_EVENT_NAME} from "../constants/api-configs";
 import {Utils} from "../helpers/utils";
 import {IconUsers} from "./Icons";
+import {ProfileAvatar} from "./MainChatBox/ProfileAvatar";
 
 export const RoomList = () => {
     const {loading,  handleApiCall} = useFetchData();
@@ -73,7 +74,7 @@ export const RoomList = () => {
     return (
         <ul>
             {rooms.map((room, idx) => {
-                const {name, uri, unreadMessageCount, type} = room;
+                const {name, uri, unreadMessageCount, type, thumb} = room;
                 const selected = selectedRoom?.uri && selectedRoom?.uri === uri;
                 const style = selected ? {
                     background: 'aliceblue',
@@ -88,7 +89,7 @@ export const RoomList = () => {
                             <div className="inline-flex items-center justify-start mr-1">
                                 <div className="w-[30px] h-[30px] rounded-full border border-gray-200 p-1 flex items-center justify-center">
                                     {type === 'dm' && (
-                                        <img src="assets/profile.jpg" className="max-w-[30px] max-h-[30px] rounded-full" alt={name}/>
+                                        <ProfileAvatar thumb={thumb} fullname={name} width={'w-14'} height={'h-14'} className={'rounded-full'}/>
                                     )}
                                     {type !== 'dm' && (
                                         <IconUsers/>

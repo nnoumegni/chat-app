@@ -1,0 +1,60 @@
+.selected-user {
+  display: inline-block;
+  padding: 0 10px;
+  border: thin solid #ccc;
+  border-radius: 10px;
+  margin-right: 10px;
+  color: #696969;
+  white-space: nowrap;
+  margin-bottom: 10px;
+}
+
+.tyn-media-group {
+  .rce-citem {
+    background: transparent !important;
+
+    .rce-citem-body--top-title {
+      margin-bottom: 0;
+      color: var(--media-text);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-transform: capitalize;
+
+      margin-top: 0;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .rce-citem-body--bottom-title {
+      font-size: .75rem;
+      color: var(--media-text);
+    }
+
+    .rce-citem-body--top-time {
+      font-size: .625rem;
+      color: var(--media-text-light);
+    }
+  }
+}
+
+.tyn-reply-item {
+  .rce-mbox {
+    color: var(--reply-text);
+    background: var(--reply-bg);
+
+    .rce-mbox-left-notch {
+      fill: var(--reply-bg);
+    }
+
+    &.rce-mbox-right {
+      color: var(--outgoing-message-text);
+      background: var(--outgoing-message-bg);
+
+      .rce-mbox-right-notch {
+        fill: var(--outgoing-message-bg);
+      }
+    }
+  }
+}

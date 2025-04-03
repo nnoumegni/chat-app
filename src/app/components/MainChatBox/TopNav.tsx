@@ -1,17 +1,35 @@
 import {useAppStore} from "../../store/use-app.store";
 import {useCallback, useEffect} from "react";
+import {ProfileAvatar} from "./ProfileAvatar";
+import {Utils} from "../../helpers/utils";
 
 export const TopNav = () => {
-    const {user, setUser, isConnected, setIsAuthenticated, themeMode, setThemeMode} = useAppStore();
+    const {user, isConnected, setUser, setIsAuthenticated, themeMode, setThemeMode} = useAppStore();
+    const global = (window as any);
+
     const handleLogout = useCallback((evt: MouseEvent) => {
         evt.preventDefault();
 
-        delete localStorage.authData;
-        setIsAuthenticated({isAuthenticated: false});
-        setTimeout(() => {
-            setUser({user: undefined});
+        Utils.setSessionData({account: null}).then(() => {
+            setIsAuthenticated({isAuthenticated: false});
+            setTimeout(() => {
+                setUser({user: undefined});
+
+                if(typeof global.handleChatLogoutClick === 'function') {
+                    evt.preventDefault();
+                    return global.handleChatLogoutClick(evt);
+                }
+            });
         });
     }, [user]);
+
+    const handleLogoClick = (evt: MouseEvent) => {
+        evt.preventDefault();
+
+        if(typeof global.handleChatLogoClick === 'function') {
+            return global.handleChatLogoClick(evt);
+        }
+    };
 
     const setTheme = (currentMode = 'light') => {
         if(currentMode !== themeMode) {
@@ -23,12 +41,12 @@ export const TopNav = () => {
 
     useEffect(() => {
 
-    }, [themeMode]);
+    }, [themeMode, isConnected]);
 
     return (
         <nav className="tyn-appbar">
             <div className="tyn-appbar-wrap">
-                <div className="tyn-appbar-logo">
+                <div className="tyn-appbar-logo" onClick={handleLogoClick}>
                     <a className="tyn-logo" href="index.html">
                         <svg viewBox="0 0 43 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M37.2654 14.793C37.2654 14.793 45.0771 20.3653 41.9525 29.5311C41.9525 29.5311 41.3796 31.1976 39.0361 34.4264L42.4732 37.9677C42.4732 37.9677 43.3065 39.478 41.5879 39.9987H24.9229C24.9229 39.9987 19.611 40.155 14.8198 36.9782C14.8198 36.9782 12.1638 35.2076 9.76825 31.9787L18.6215 32.0308C18.6215 32.0308 24.298 31.9787 29.7662 28.3333C35.2344 24.6878 37.4217 18.6988 37.2654 14.793Z" fill="#60A5FA" />
@@ -238,7 +256,7 @@ export const TopNav = () => {
                                         <li>
                                             <div className="tyn-media-group">
                                                 <div className="tyn-media tyn-circle">
-                                                    <img srcSet={user?.thumb} alt=""/>
+                                                    <ProfileAvatar thumb={user?.thumb}/>
                                                 </div>
                                                 <div className="tyn-media-col">
                                                     <div className="tyn-media-row">
@@ -339,7 +357,7 @@ export const TopNav = () => {
                         <li className="tyn-appbar-item">
                             <a className="d-inline-flex dropdown-toggle" data-bs-auto-close="outside" data-bs-toggle="dropdown" href="#" data-bs-offset="0,10">
                                 <div className="tyn-media tyn-size-lg tyn-circle">
-                                    <img src={user?.thumb} alt={user.fullname}/>
+                                    <ProfileAvatar thumb={user?.thumb} fullname={user?.fullname} showStatus={isConnected}/>
                                 </div>
                             </a>
                             <div className="dropdown-menu dropdown-menu-end">

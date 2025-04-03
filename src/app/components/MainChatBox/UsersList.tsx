@@ -4,6 +4,7 @@ import {Utils} from "../../helpers/utils";
 import {useFetchData} from "../../api/fetch-data";
 import {useAppStore} from "../../store/use-app.store";
 import {DmRoom, RoomUser, User} from "../../models/chat-models";
+import {ProfileAvatar} from "./ProfileAvatar";
 
 export const UsersList = ({isModal = false, handleRoomClick}) => {
     const {loading,  handleApiCall} = useFetchData();
@@ -37,7 +38,6 @@ export const UsersList = ({isModal = false, handleRoomClick}) => {
     }, []);
 
     const handleUserClicked = useCallback(({user: dmUser}: {user: RoomUser}) => {
-        console.log(user.id);
         const roomUser: DmRoom = Utils.roomUserMapper({user: dmUser, currentUser: user});
         if(roomType === 'dm') {
             handleRoomClick({room: roomUser});
@@ -75,13 +75,13 @@ export const UsersList = ({isModal = false, handleRoomClick}) => {
                         {loading && (
                             <Loader/>
                         )}
-                        {!loading && users.map((user: User, index = 0) => {
-                            const {fullname} = user;
+                        {!loading && users.map((user: RoomUser, index = 0) => {
+                            const {fullname, thumb} = user;
                             return (
                                 <li key={index} className="cursor-pointer" onClick={() => handleUserClicked({user})}>
                                     <div className="tyn-media-group">
                                         <div className="tyn-media">
-                                            <img src="assets/images/avatar/1.jpg" alt=""/>
+                                            <ProfileAvatar thumb={thumb} fullname={fullname}/>
                                         </div>
                                         <div className="tyn-media-col">
                                             <div className="tyn-media-row">

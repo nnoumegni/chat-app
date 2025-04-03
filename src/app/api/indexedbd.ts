@@ -101,6 +101,7 @@ export class IndexedDB {
     const exists = !!(results && results[0]);
     if(!exists) {
       const existingData = results[0] || {};
+      console.log('Adding...')
       return await this.setItems([{...existingData, ...data}]);
     }
 

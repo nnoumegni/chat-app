@@ -2,6 +2,7 @@ import React, {useCallback, useRef, useState} from "react";
 import { IconUsers } from "../../Icons";
 import {RoomUser} from "../../../models/chat-models";
 import {useAppStore} from "../../../store/use-app.store";
+import {ProfileAvatar} from "../ProfileAvatar";
 
 export const HeaderProfile = () => {
     const {selectedRoom} = useAppStore();
@@ -36,10 +37,10 @@ export const HeaderProfile = () => {
                 {isDirectMessaging && (
                     <div className="tyn-media-group">
                         <div className="tyn-media tyn-size-lg d-none d-sm-inline-flex">
-                            <img src="assets/images/avatar/1.jpg" alt=""/>
+                            <ProfileAvatar thumb={selectedRoom?.thumb} fullname={selectedRoom?.name}/>
                         </div>
                         <div className="tyn-media tyn-size-rg d-sm-none">
-                            <img src="assets/images/avatar/1.jpg" alt=""/>
+                            <ProfileAvatar thumb={selectedRoom?.thumb} fullname={selectedRoom?.name}/>
                         </div>
                         <div className="tyn-media-col">
                             <div className="tyn-media-row">

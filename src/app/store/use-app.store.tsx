@@ -2,11 +2,12 @@
 
 import { create } from 'zustand';
 import {User, Message, Room, AddRoom, RoomUser, DmRoom} from '../models/chat-models';
+import {Utils} from "../helpers/utils";
 
 export const useAppStore = create((set) => ({
   user: null,
   socket: null,
-  isAuthenticated: false,
+  isAuthenticated: undefined,
   isConnected: false,
   isConnecting: false,
   messages: [],
@@ -37,6 +38,12 @@ export const useAppStore = create((set) => ({
     };
   }),
   setIsConnected: ({isConnected = false}) => set(() => {
+    const global = (window as any);
+    console.log({isConnected});
+    if(typeof global.chatStatusHandler === 'function') {
+      global.chatStatusHandler({isConnected});
+    }
+
     return {
       isConnected,
     };
@@ -67,8 +74,10 @@ export const useAppStore = create((set) => ({
     };
   }),
   addRoom: ({room}: {room: AddRoom}) => set((state: {rooms: AddRoom[]}) => {
+    const others = state.rooms.filter(r => r.roomUri !== room.roomUri);
+    const rooms = [room, ...others];
     return {
-      rooms: [room, ...state.rooms],
+      rooms,
     };
   }),
   setSubscriptions: ({subscriptions}) => set((state) => {
