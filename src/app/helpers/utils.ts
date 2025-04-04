@@ -1,6 +1,7 @@
 import {DmRoom, Room, RoomUser, User} from "../models/chat-models";
 import * as CryptoJS from 'crypto-js';
 import {Storage} from "../api/storage";
+import { toArray } from "react-emoji-render";
 import ColorHash from './../../../public/assets/static/color-hash';
 import {findIndex} from 'lodash';
 import {IconUsers} from "../components/Icons";
@@ -330,4 +331,17 @@ export class Utils {
         !isOption && item.classList.add('active');
         !isOption && document.getElementById('tynMain').classList.toggle('main-shown');
     }
+
+    static parseEmojis(value) {
+        const emojisArray = toArray(value);
+
+        const newValue = emojisArray.reduce((previous, current) => {
+            if (typeof current === "string") {
+                return previous + current;
+            }
+            return previous + current.props.children;
+        }, "");
+
+        return newValue;
+    };
 }
