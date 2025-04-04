@@ -9,6 +9,7 @@ import {StorageService} from "./storage.service";
 export class Utils {
     static browserDeviceIdStorageKey = 'buuid' ;
     static storageService = new StorageService();
+    static BREAK_POINT = 768;
 
     static platform = {
         is: (type = '') => false
@@ -321,5 +322,12 @@ export class Utils {
         };
 
         return encodeSvg(svg);
+    }
+
+    static toggleSideNav(evt: any) {
+        const item = evt.target;
+        let isOption = item.closest('.tyn-aside-item-option');
+        !isOption && item.classList.add('active');
+        !isOption && document.getElementById('tynMain').classList.toggle('main-shown');
     }
 }

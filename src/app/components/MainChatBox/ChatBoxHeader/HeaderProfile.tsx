@@ -3,6 +3,7 @@ import { IconUsers } from "../../Icons";
 import {RoomUser} from "../../../models/chat-models";
 import {useAppStore} from "../../../store/use-app.store";
 import {ProfileAvatar} from "../ProfileAvatar";
+import {Utils} from "../../../helpers/utils";
 
 export const HeaderProfile = () => {
     const {selectedRoom} = useAppStore();
@@ -23,12 +24,16 @@ export const HeaderProfile = () => {
 
     const handleShowUserInfo = (evt: MouseEvent) => {};
     const handleShowGroupInfo = (evt: MouseEvent) => {};
+    const handleToggleSideNav = (evt: MouseEvent) => {
+        evt.preventDefault();
+        Utils.toggleSideNav(evt);
+    };
 
     return (
         <>
             <div className="tyn-chat-head">
                 <ul className="tyn-list-inline d-md-none ms-n1">
-                    <li><button className="btn btn-icon btn-md btn-pill btn-transparent js-toggle-main">
+                    <li><button className="btn btn-icon btn-md btn-pill btn-transparent js-toggle-main" onClick={handleToggleSideNav}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-left" viewBox="0 0 16 16">
                             <path fillRule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
                         </svg>

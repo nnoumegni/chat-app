@@ -40,20 +40,24 @@
 }
 
 .tyn-reply-item {
-  .rce-mbox {
-    color: var(--reply-text);
-    background: var(--reply-bg);
+  .rce-container-mbox {
+    min-width: auto;
 
-    .rce-mbox-left-notch {
-      fill: var(--reply-bg);
-    }
+    .rce-mbox {
+      color: var(--reply-text);
+      background: var(--reply-bg);
 
-    &.rce-mbox-right {
-      color: var(--outgoing-message-text);
-      background: var(--outgoing-message-bg);
+      .rce-mbox-left-notch {
+        fill: var(--reply-bg);
+      }
 
-      .rce-mbox-right-notch {
-        fill: var(--outgoing-message-bg);
+      &.rce-mbox-right {
+        color: var(--outgoing-message-text);
+        background: var(--outgoing-message-bg);
+
+        .rce-mbox-right-notch {
+          fill: var(--outgoing-message-bg);
+        }
       }
     }
   }
