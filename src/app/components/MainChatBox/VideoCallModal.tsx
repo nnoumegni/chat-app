@@ -1,12 +1,104 @@
+import {useEffect, useRef, useState} from "react";
+import {useAppStore} from "../../store/use-app.store";
+
+const ringtone = new Audio("/assets/ringtone.mp3");
+
 export const VideoCallModal = () => {
+    const {socket, selectedRoom, user} = useAppStore();
+    const [remoteSocketId, setRemoteSocketId] = useState(null);
+    const localVideoRef = useRef(null);
+    const remoteVideoRef = useRef(null);
+    const pcRef = useRef(null);
+
+    useEffect(() => {
+        if(socket && selectedRoom) {
+            setRemoteSocketId(selectedRoom.roomUri);
+            socket.on("incoming-call", async ({from, offer}) => {
+                setRemoteSocketId(from);
+                await ringtone.play();
+
+                const pc = createPeerConnection(from);
+                await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                socket.emit("answer-call", {to: from, answer});
+            });
+
+            socket.on("call-answered", async ({answer}) => {
+                await pcRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+            });
+
+            socket.on("ice-candidate", async ({candidate}) => {
+                if (candidate) {
+                    try {
+                        await pcRef.current.addIceCandidate(candidate);
+                    } catch (e) {
+                        console.error("Error adding received ice candidate", e);
+                    }
+                }
+            });
+
+            socket.on("call-ended", () => {
+                endCall();
+            });
+
+            return () => socket.disconnect();
+        }
+    }, [socket, selectedRoom, user]);
+
+    const createPeerConnection = (targetId) => {
+        const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+        pcRef.current = pc;
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit("ice-candidate", { to: targetId, candidate: event.candidate });
+            }
+        };
+
+        pc.ontrack = (event) => {
+            remoteVideoRef.current.srcObject = event.streams[0];
+        };
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+            localVideoRef.current.srcObject = stream;
+            stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        });
+
+        return pc;
+    };
+
+    const startCall = async () => {
+        const to = Object.keys(selectedRoom.users).filter(k => parseInt(k, 10) !== parseInt(user.id, 10))[0];
+        const pc = createPeerConnection(remoteSocketId);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('broadcast', {
+            eventName: "incoming-call",
+            payload: {...selectedRoom, ...{ to, offer }}
+        });
+        // socket.emit("call-user", { to, offer });
+    };
+
+    const endCall = () => {
+        if (pcRef.current) {
+            pcRef.current.close();
+            pcRef.current = null;
+        }
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+        if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    };
+
     return (
         <div className="modal fade" tabIndex="-1" id="videoCallingScreen" data-bs-backdrop="static" data-bs-keyboard="false">
             <div className="modal-dialog modal-dialog-centered modal-sm">
                 <div className="modal-content border-0">
                     <div className="tyn-chat-call tyn-chat-call-video">
                         <div className="tyn-chat-call-stack">
-                            <div className="tyn-chat-call-cover">
+                            <div className="tyn-chat-call-cover relative">
                                 <img src="assets/images/v-cover/1.jpg" alt=""/>
+                                <video ref={localVideoRef} autoPlay muted playsInline className="absolute w-full h-full top-0 left-0" />
                             </div>
                         </div>
                         <div className="tyn-chat-call-stack on-dark">
@@ -22,8 +114,9 @@ export const VideoCallModal = () => {
                                         <span className="content">02:09 min</span>
                                     </div>
                                 </div>
-                                <div className="tyn-media tyn-media-1x1_3 tyn-size-3xl border border-2 border-dark">
+                                <div className="tyn-media tyn-media-1x1_3 tyn-size-3xl border border-2 border-dark relative">
                                     <img src="assets/images/v-cover/2.jpg" alt=""/>
+                                    <video ref={remoteVideoRef} autoPlay playsInline className="absolute w-full h-full top-0 left-0" />
                                 </div>
                             </div>
                             <ul className="tyn-list-inline gap gap-3 mx-auto py-4 justify-content-center  mt-auto">
@@ -37,7 +130,7 @@ export const VideoCallModal = () => {
                                     </button>
                                 </li>
                                 <li>
-                                    <button className="btn btn-icon btn-pill btn-light" data-bs-toggle="modal" data-bs-target="#callingScreen">
+                                    <button className="btn btn-icon btn-pill btn-light" data-bs-toggle="modal" data-bs-target="#callingScreen" onClick={startCall}>
 
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-camera-video-fill" viewBox="0 0 16 16">
                                             <path fillRule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2V5z" />
@@ -54,7 +147,7 @@ export const VideoCallModal = () => {
                                     </button>
                                 </li>
                                 <li>
-                                    <button className="btn btn-icon btn-pill btn-danger" data-bs-dismiss="modal">
+                                    <button className="btn btn-icon btn-pill btn-danger" data-bs-dismiss="modal" onClick={endCall}>
 
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-telephone-x-fill" viewBox="0 0 16 16">
                                             <path fillRule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511zm9.261 1.135a.5.5 0 0 1 .708 0L13 2.793l1.146-1.147a.5.5 0 0 1 .708.708L13.707 3.5l1.147 1.146a.5.5 0 0 1-.708.708L13 4.207l-1.146 1.147a.5.5 0 0 1-.708-.708L12.293 3.5l-1.147-1.146a.5.5 0 0 1 0-.708z" />
