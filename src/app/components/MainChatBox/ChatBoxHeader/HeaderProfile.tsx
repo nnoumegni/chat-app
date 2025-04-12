@@ -6,7 +6,7 @@ import {ProfileAvatar} from "../ProfileAvatar";
 import {Utils} from "../../../helpers/utils";
 
 export const HeaderProfile = () => {
-    const {selectedRoom} = useAppStore();
+    const {selectedRoom, setToggleVideoCall} = useAppStore();
 
     const {type} = selectedRoom || {};
     const isDirectMessaging = type === 'dm';
@@ -34,9 +34,8 @@ export const HeaderProfile = () => {
         audioModal.show();
     }
     const startVideoCall = () => {
-        // data-bs-toggle="modal" data-bs-target="#videoCallingScreen"
-        const videoModal = new (window as any).bootstrap.Modal('#videoCallingScreen', {});
-        videoModal.show();
+        console.log('hererer');
+        setToggleVideoCall(true);
     }
 
     return (

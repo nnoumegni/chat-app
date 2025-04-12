@@ -22,6 +22,7 @@ export const useAppStore = create((set) => ({
   selectedUsers: [],
   roomType: '',
   themeMode: 'light',
+  toggleVideoCall: false,
   setUser: ({user}: {user?: User}) => set(() => {
     return {
       user,
@@ -123,6 +124,11 @@ export const useAppStore = create((set) => ({
   setThemeMode: ({themeMode = ''}) => set(() => {
     return {
       themeMode,
+    };
+  }),
+  setToggleVideoCall: (toggleVideoCall) => set(() => {
+    return {
+      toggleVideoCall,
     };
   }),
 }))

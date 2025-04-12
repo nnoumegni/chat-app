@@ -44,7 +44,6 @@ export const MainChatBox = () => {
                 </div>
                 <QuickChatBox/>
             </div>
-            <AudioCallModal/>
             <VideoCallModal/>
             <MuteOptionsModal/>
             <NewChatModal/>

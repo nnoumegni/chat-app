@@ -1,3 +1,5 @@
+@import "/public/assets/dailyCallStyle.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

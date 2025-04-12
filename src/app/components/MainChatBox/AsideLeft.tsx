@@ -1,4 +1,4 @@
-import React, {useEffect } from "react";
+import React, {useEffect, useState} from "react";
 import {useAppStore} from "../../store/use-app.store";
 import {Room, RoomUser} from "../../models/chat-models";
 import {Utils} from "../../helpers/utils";
@@ -10,17 +10,20 @@ import {IconUsers} from "../Icons";
 export const AsideLeft = () => {
     const {loading,  handleApiCall} = useFetchData();
     const {user, rooms, selectedRoom, showNewRoomForm, setRoomType, setShowNewRoomForm, setRooms, setSelectedRoom} = useAppStore();
+    const [initRooms, setInitRooms] = useState([]);
 
     useEffect(() => {
         const {id: userId, token} = user;
         Promise.all([
             handleApiCall({path: 'chat', action: 'getUserRooms', token, data: {userId}}),
+            handleApiCall({path: 'mesdoh', action: 'searchAccounts', token, data: {mid: user, token}}),
             Promise.resolve([]) // handleApiCall({path: 'chat', action: 'searchUsers', token, data: {}})
         ]).then(([roomItems, userItems]: [roomItems: Room[], userItems: RoomUser[]]) => {
 
             roomItems = roomItems.map(room => Utils.formattedRoom({room, currentUser: user}));
 
             const allRooms = [...roomItems, ...userItems];
+            setInitRooms(allRooms);
 
             setRooms({rooms: allRooms});
         })
@@ -44,6 +47,13 @@ export const AsideLeft = () => {
     const handleNewConversation = ({roomType}) => {
         setRoomType({roomType});
         setShowNewRoomForm({showNewRoomForm: true});
+    }
+
+    const handleListFilter = (evt: MouseEvent) => {
+        const value = evt.target.value;
+        if(!(value && value.trim())) {
+            setRooms({rooms: initRooms});
+        }
     }
 
     return (
@@ -88,7 +98,13 @@ export const AsideLeft = () => {
                                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
                                         </svg>
                                     </div>
-                                    <input type="text" className="form-control form-control-solid" id="search" placeholder="Search contact / chat"/>
+                                    <input
+                                        type="text"
+                                        className="form-control form-control-solid"
+                                        id="search"
+                                        placeholder="Search account / chat"
+                                        onKeyUp={handleListFilter}
+                                    />
                                 </div>
                             </div>
                         </div>

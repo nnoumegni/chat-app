@@ -239,8 +239,10 @@ export class Utils {
     }
 
     static getDmRoomUri({dmUser, currentUser}) {
-        const sortedIds = [dmUser.userId, currentUser.userId].sort();
-        const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
+        // Use string since
+        const sortedIds = [`${dmUser.userId}`, `${currentUser.userId}`].sort();
+        // const uniqueDmRoomUri = parseInt(sortedIds.join(''), 10);
+        const uniqueDmRoomUri = sortedIds.join('');
         return `${uniqueDmRoomUri}`;
     }
 

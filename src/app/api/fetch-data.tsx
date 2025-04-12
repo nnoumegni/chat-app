@@ -1,7 +1,7 @@
 import {useState} from "react";
 import axios from "axios";
 import {enc, HmacSHA256} from "crypto-js";
-import {AddRoom, ApiRequest, ApiResponse, Message, Room, RoomUser, UpdateRoom} from "../models/chat-models";
+import {AddRoom, ApiRequest, ApiResponse, Message, Room, RoomUser, UpdateRoom, User} from "../models/chat-models";
 import {IndexedDB} from "./indexedbd";
 import {
     BACKEND_URL,
@@ -15,12 +15,14 @@ import {
     USERS_TABLE_NAME
 } from "../constants/api-configs";
 import {Utils} from "../helpers/utils";
+import {useAppStore} from "../store/use-app.store";
 
 // The main purpose of this hook is to persist data using IndexesDB and handle api calls
 export const useFetchData = () => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
+    const {user} = useAppStore();
     const indexedDB = new IndexedDB(DB_NAME);
 
     const handleApiCall = (params: ApiRequest): Promise<ApiResponse | unknown>  => {
@@ -47,6 +49,9 @@ export const useFetchData = () => {
             account: {
                 doLogin,
                 doRegister
+            },
+            mesdoh: {
+                searchAccounts
             }
         }
 
@@ -206,7 +211,7 @@ export const useFetchData = () => {
 
         // Set the table name and the search index field
         await idb.setup(tableName, [TEXT_INDEX_FIELDS]);
-console.log({message})
+
         const {success} = idb.setItems([message]);
         if(success) {
             return updateRoom({roomUri, data: {active: 1}})
@@ -306,6 +311,70 @@ console.log({message})
             });
 
             return users;
+        });
+    }
+
+    const searchAccounts = async ({token = '', q = ''}) => {
+        token = token || `${new Date().getTime()}`;
+        const params = {
+            path: 'association',
+            action: 'searchProfile',
+            token,
+            data: {
+                org: 'amicale-des-ressortissantes-et-ressortissants-de-louest-cameroun-du-quebec',
+                mid: user.id
+            }
+        };
+
+        const encryptedData =  Utils.aes(params);
+        const reqData = {
+            data: encryptedData,
+            token
+        };
+
+        return runChatAction({path: 'scrud', data: reqData}).then(resp => {
+            const {data} = resp;
+            console.log(resp);
+            /*
+            {
+                "_id": "67def17d715429f82be0b641",
+                "uri": "000207",
+                "parent_id": 0,
+                "first_name": "Blaise Dely",
+                "full_name": "Blaise Dely NGODJO TAYO",
+                "last_name": "NGODJO TAYO",
+                "phone_number": "+15818493406",
+                "email": "blaisengodjo@gmail.com",
+                "active": 0,
+                "in_probation": 0,
+                "probation_start_date": 0,
+                "probation_end_date": 0,
+                "join_date": "2025-03-22",
+                "block_app_access": "0",
+                "total": 0,
+                "actualBalance": 0,
+                "paid": 0,
+                "charge": 0,
+                "title": "Blaise Dely NGODJO TAYO",
+                "status": "inactive",
+                "color": "green",
+                "statusLabel": "Inactive"
+            }
+             */
+            return (data || []).map(p => {
+                const {
+                    thumb,
+                    City: city,
+                    Country: country,
+                    first_name: firstname,
+                    last_name: lastname,
+                    _id: id,
+                    full_name: fullname
+                } = p;
+                const dmUser: User = {id, thumb, fullname};
+                const room = Utils.roomUserMapper({user: dmUser, currentUser: user});
+                return room; // {id, firstname, lastname, fullname, city, country, thumb, type: 'dm'};
+            });
         });
     }
 

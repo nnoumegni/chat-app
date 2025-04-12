@@ -1,20 +1,24 @@
 import {useEffect, useRef, useState} from "react";
 import {useAppStore} from "../../store/use-app.store";
+import {DailyCallManager} from "../../helpers/DailyCallManager";
+import '/public/assets/dailyCallStyle.css';
 
 const ringtone = new Audio("/assets/ringtone.mp3");
 
 export const VideoCallModal = () => {
-    const {socket, selectedRoom, user} = useAppStore();
-    const [remoteSocketId, setRemoteSocketId] = useState(null);
+    const {socket, selectedRoom, user, toggleVideoCall, setToggleVideoCall} = useAppStore();
+    const [videoModal, setVideoModal] = useState(null);
+    const [dailyCallManager, setDailyCallManager] = useState(null);
+    const [roomUrl, setRoomUrl] = useState(null);
+    const [hasJoined, setHasJoined] = useState(false);
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const pcRef = useRef(null);
 
+    let callManager;
     useEffect(() => {
-        if(socket && selectedRoom) {
-            setRemoteSocketId(selectedRoom.roomUri);
+        if(socket && selectedRoom && dailyCallManager) {
             socket.on("incoming-call", async ({from, offer}) => {
-                setRemoteSocketId(from);
                 await ringtone.play();
 
                 const pc = createPeerConnection(from);
@@ -43,9 +47,47 @@ export const VideoCallModal = () => {
                 endCall();
             });
 
-            return () => socket.disconnect();
+            socket.on("meeting-started", (data) => {
+                console.log(data);
+                setRoomUrl(data.roomUrl);
+                // We first need to make sure the meeting room was created
+                dailyCallManager.joinRoom(data.roomUrl, 'joinToken');
+            });
+
+            const modal = new (window as any).bootstrap.Modal('#videoCallingScreen', {});
+            setVideoModal(modal);
         }
-    }, [socket, selectedRoom, user]);
+
+        if(!dailyCallManager && !callManager) {
+            callManager = new DailyCallManager();
+            callManager.joinCallback = joinCallCallback;
+            setDailyCallManager(callManager);
+        }
+    }, [socket, selectedRoom, user, dailyCallManager]);
+
+    useEffect(() => {
+        console.log({videoModal, toggleVideoCall})
+        if(videoModal) {
+            if (toggleVideoCall) {
+                videoModal.show();
+            } else {
+                videoModal.hide();
+            }
+        }
+    }, [toggleVideoCall, videoModal]);
+
+    useEffect(() => {
+        if(socket && selectedRoom && toggleVideoCall) {
+            socket.emit('broadcast', {
+                eventName: "incoming-call",
+                payload: {...selectedRoom}
+            });
+        }
+    }, [socket, selectedRoom, toggleVideoCall]);
+
+    const joinCallCallback = () => {
+        setHasJoined(true);
+    }
 
     const createPeerConnection = (targetId) => {
         const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
@@ -70,24 +112,44 @@ export const VideoCallModal = () => {
     };
 
     const startCall = async () => {
+        /*
         const to = Object.keys(selectedRoom.users).filter(k => parseInt(k, 10) !== parseInt(user.id, 10))[0];
         const pc = createPeerConnection(remoteSocketId);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
+
+         */
         socket.emit('broadcast', {
             eventName: "incoming-call",
-            payload: {...selectedRoom, ...{ to, offer }}
+            payload: {...selectedRoom}
         });
         // socket.emit("call-user", { to, offer });
     };
 
     const endCall = () => {
+        /*
         if (pcRef.current) {
             pcRef.current.close();
             pcRef.current = null;
         }
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
         if (localVideoRef.current) localVideoRef.current.srcObject = null;
+        */
+
+        if(videoModal) {
+            videoModal.hide();
+        }
+
+        console.log({dailyCallManager});
+        setToggleVideoCall(false);
+        setRoomUrl(null);
+        setHasJoined(false);
+        if(dailyCallManager) {
+            dailyCallManager.leave().then(() => {
+                console.log({toggleVideoCall});
+                console.log({toggleVideoCall});
+            });
+        }
     };
 
     return (
@@ -96,9 +158,14 @@ export const VideoCallModal = () => {
                 <div className="modal-content border-0">
                     <div className="tyn-chat-call tyn-chat-call-video">
                         <div className="tyn-chat-call-stack">
-                            <div className="tyn-chat-call-cover relative">
+                            <div className="tyn-chat-call-cover relative local-video-container">
                                 <img src="assets/images/v-cover/1.jpg" alt=""/>
-                                <video ref={localVideoRef} autoPlay muted playsInline className="absolute w-full h-full top-0 left-0" />
+                                <video
+                                    ref={localVideoRef}
+                                    autoPlay muted playsInline
+                                    className="video-element object-cover absolute w-full h-full top-0 left-0"
+                                    style={{display: `${!hasJoined ? 'none' : ''}`}}
+                                />
                             </div>
                         </div>
                         <div className="tyn-chat-call-stack on-dark">
@@ -114,9 +181,9 @@ export const VideoCallModal = () => {
                                         <span className="content">02:09 min</span>
                                     </div>
                                 </div>
-                                <div className="tyn-media tyn-media-1x1_3 tyn-size-3xl border border-2 border-dark relative">
+                                <div className="tyn-media tyn-media-1x1_3 tyn-size-3xl border border-2 border-dark relative remote-video-container">
                                     <img src="assets/images/v-cover/2.jpg" alt=""/>
-                                    <video ref={remoteVideoRef} autoPlay playsInline className="absolute w-full h-full top-0 left-0" />
+                                    <video ref={remoteVideoRef} autoPlay playsInline className="video-element object-cover absolute w-full h-full top-0 left-0" />
                                 </div>
                             </div>
                             <ul className="tyn-list-inline gap gap-3 mx-auto py-4 justify-content-center  mt-auto">
@@ -158,6 +225,56 @@ export const VideoCallModal = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+            <div>
+                <div>
+                    <label htmlFor="room-url">Room URL:</label>
+                    <input
+                        type="text"
+                        id="room-url"
+                        size="50"
+                        value="https://mesdoh.daily.co/hello"
+                        placeholder="https://mesdoh.daily.co/hello"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="join-token">
+                        <a
+                            href="https://docs.daily.co/guides/configurations-and-settings/controlling-who-joins-a-meeting"
+                            target="_blank"
+                        >Meeting token:</a
+                        >
+                    </label>
+                    <input type="text" id="join-token" size="50" placeholder="Optional"/>
+                </div>
+
+                <div className="controls">
+                    <button id="join-btn">Join Room</button>
+                    <button id="leave-btn" disabled>Leave</button>
+                </div>
+
+                <div className="controls">
+                    <button id="toggle-camera" disabled="true">Toggle Camera</button>
+                    <button id="toggle-mic" disabled="true">Toggle Microphone</button>
+                </div>
+
+                <div className="controls">
+                    <select id="camera-selector">
+                        <option value="" disabled selected>Select a camera</option>
+                    </select>
+                    <select id="mic-selector">
+                        <option value="" disabled selected>Select a microphone</option>
+                    </select>
+                </div>
+
+                <div id="status">
+                    <div id="camera-state">Camera: Off</div>
+                    <div id="mic-state">Mic: Off</div>
+                    <div id="participant-count">Participants: 0</div>
+                    <div id="active-speaker">Active Speaker: None</div>
+                </div>
+
+                <div id="videos"/>
             </div>
         </div>
     )
