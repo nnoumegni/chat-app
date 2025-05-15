@@ -36,6 +36,7 @@ export const useFetchData = () => {
                 addMessage,
                 getMessages,
                 searchUsers,
+                uploadFile,
                 subscribe: (data) => {
                     return runChatAction({path: 'subscribe', data})
                 },
@@ -376,6 +377,29 @@ export const useFetchData = () => {
                 return room; // {id, firstname, lastname, fullname, city, country, thumb, type: 'dm'};
             });
         });
+    }
+
+    const uploadFile = async (formData: FormData) => {
+        try {
+            const response = await axios({
+                method: 'post',
+                url: 'https://api.jetcamer.com/file-upload',
+                data: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            const { data } = response;
+            return {
+                url: data.url,
+                thumb: data.thumb,
+                name: data.name
+            };
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            throw error;
+        }
     }
 
     const runChatAction = ({path, data}: {path: string; data: unknown}) => {
