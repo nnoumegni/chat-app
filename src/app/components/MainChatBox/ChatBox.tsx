@@ -161,7 +161,7 @@ export const ChatBox = () => {
                     <ChatBoxFooter/>
                 </>
             )}
-            {!isRoomUser && (
+            {!isRoomUser && false && (
                 <div className="py-4">
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center">
