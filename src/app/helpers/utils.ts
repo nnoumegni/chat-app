@@ -7,6 +7,10 @@ import {findIndex} from 'lodash';
 import {IconUsers} from "../components/Icons";
 import {StorageService} from "./storage.service";
 
+interface UserMap {
+    [key: number]: RoomUser;
+}
+
 export class Utils {
     static browserDeviceIdStorageKey = 'buuid' ;
     static storageService = new StorageService();
@@ -17,29 +21,27 @@ export class Utils {
     }
 
     static formattedRoom({room, currentUser}: {room: Room; currentUser: User}) {
-        const userData = room.users;
+        const userData = room.users || {} as UserMap;
         const keys = Object.keys(userData).map(key => parseInt(key, 10));
         const isDm = room.type === 'dm';
 
         if(isDm) {
-            let dmUser;
+            let dmUser: RoomUser | undefined;
             // If Im DM myself
             if (keys.length === 1) {
-                if (userData) {
-                    dmUser = userData[currentUser.id];
-                }
+                dmUser = userData[currentUser.id];
             } else if (keys.length === 2) {
                 const index = keys.findIndex(key => key !== currentUser.id);
                 if (index !== -1) {
                     const userKey = keys[index];
-                    if (userData) {
-                        dmUser = userData[userKey];
-                    }
+                    dmUser = userData[userKey];
                 }
             }
 
-            room.name = dmUser.fullname;
-            room.thumb = dmUser.thumb;
+            if (dmUser) {
+                room.name = dmUser.fullname;
+                room.thumb = dmUser.thumb;
+            }
         } else {
             room.thumb = IconUsers({type: 'string'}) as string;
         }
@@ -56,52 +58,24 @@ export class Utils {
         return CryptoJS.AES.encrypt(JSON.stringify(params), token, {}).toString();
     }
 
-    static loadScripts({urls = [], replaceIfExists = true, callback, docElt = null}) {
-        const that = this;
-        (function loadScript() {
-            const url = urls.shift();
-            if (!url) {
-                if (typeof callback === 'function') {
-                    callback();
-                }
-                return;
+    static loadScripts(params: {urls: string[], callback?: () => void}): void {
+        const {urls, callback} = params;
+        let loaded = 0;
+        const head = document.head;
+        const onload = () => {
+            loaded++;
+            if (loaded === urls.length && callback) {
+                callback();
             }
+        };
 
-            const startDate = new Date();
-
-            const id = that.md5(url);
-
-            // Adding the script tag to the head as suggested before
-            const doc = docElt || (document as any);
-            const elt = doc.getElementById(id);
-            if (elt) {
-                if (replaceIfExists) {
-                    elt.parentNode.removeChild(doc.getElementById(id));
-                } else {
-                    // Load next script
-                    return loadScript();
-                }
-            }
-            const head = doc.body;
-            const script = doc.createElement('script') as any;
+        urls.forEach(url => {
+            const script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = url;
-            if (id) { script.id = id; }
-
-            // Then bind the event to the callback function.
-            // There are several events for cross browser compatibility.
-            script.onreadystatechange = callback;
-            script.onload = () => {
-                loadScript();
-            };
-
-            script.onerror = () => {
-                loadScript();
-            };
-
-            // Fire the loading
+            script.onload = onload;
             head.appendChild(script);
-        }());
+        });
     }
 
     static unLoadScript(id, callback) {
@@ -246,17 +220,23 @@ export class Utils {
         return `${uniqueDmRoomUri}`;
     }
 
-    static addOrMoveArrayItem({arr, matchData, new_index, item}) {
-        const old_index = findIndex(arr, matchData);
-        console.log(arr, matchData, item, old_index)
-        if (old_index !== -1) {
-            arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
-        } else {
-            arr.splice(new_index, 0, item);
-        }
+    static addOrMoveArrayItem<T>({arr, matchData, new_index, item}: {
+        arr: T[],
+        matchData: {[key: string]: any},
+        new_index: number,
+        item: T
+    }): T[] {
+        const items = [...arr];
+        const key = Object.keys(matchData)[0];
+        const value = matchData[key];
+        const index = items.findIndex(item => (item as any)[key] === value);
 
-        return arr;
-    };
+        if (index !== -1) {
+            items.splice(index, 1);
+        }
+        items.splice(new_index, 0, item);
+        return items;
+    }
 
     static async getSessionData() {
         return Promise.all([
@@ -327,11 +307,20 @@ export class Utils {
         return encodeSvg(svg);
     }
 
-    static toggleSideNav(evt: any) {
-        const item = evt.target;
-        let isOption = item.closest('.tyn-aside-item-option');
-        !isOption && item.classList.add('active');
-        !isOption && document.getElementById('tynMain').classList.toggle('main-shown');
+    static toggleSideNav(evt: MouseEvent | React.MouseEvent) {
+        if (!evt) return;
+        
+        const target = evt.target as HTMLElement;
+        if (!target) return;
+
+        const item = target.closest('.tyn-aside-item');
+        const isOption = target.closest('.tyn-aside-item-option');
+        const mainElement = document.getElementById('tynMain');
+        
+        if (item && !isOption && mainElement) {
+            item.classList.add('active');
+            mainElement.classList.toggle('main-shown');
+        }
     }
 
     static parseEmojis(value) {

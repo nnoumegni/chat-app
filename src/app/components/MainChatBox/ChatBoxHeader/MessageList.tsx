@@ -6,56 +6,147 @@ import {Avatar, MessageBox} from "react-chat-elements";
 import {Utils} from "../../../helpers/utils";
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import {MouseEvent} from 'react';
 
-export const MessageList = ({userMap}) => {
-    const {user, isConnected, messages} = useAppStore();
-    const handleEmojiClick = (evt: MouseEvent) => {
+interface EmojiData {
+    native: string;
+    [key: string]: any;
+}
+
+interface MessageReaction {
+    emoji: string;
+    count: number;
+    users: number[];
+}
+
+interface ExtendedMessage extends Message {
+    reactions?: MessageReaction[];
+}
+
+export const MessageList = ({userMap}: {userMap: any}) => {
+    const {user, isConnected, messages, addMessage} = useAppStore() as {
+        user: {id: number};
+        isConnected: boolean;
+        messages: ExtendedMessage[];
+        addMessage: ({message}: {message: ExtendedMessage}) => void;
+    };
+    
+    const handleEmojiSelect = (emoji: EmojiData, messageId: string | undefined) => {
+        if (!messageId) return;
+        
+        // Find the message to update
+        const messageToUpdate = messages.find(msg => msg.msgUri === messageId);
+        if (messageToUpdate) {
+            // Create or update reactions array
+            const reactions = messageToUpdate.reactions || [];
+            const existingReactionIndex = reactions.findIndex((r: MessageReaction) => r.emoji === emoji.native);
+            
+            if (existingReactionIndex > -1) {
+                // If user already reacted, remove their reaction
+                const reaction = reactions[existingReactionIndex];
+                if (reaction.users.includes(user.id)) {
+                    reaction.users = reaction.users.filter((id: number) => id !== user.id);
+                    reaction.count--;
+                    if (reaction.count === 0) {
+                        reactions.splice(existingReactionIndex, 1);
+                    }
+                } else {
+                    // Add user's reaction
+                    reaction.users.push(user.id);
+                    reaction.count++;
+                }
+            } else {
+                // Add new reaction
+                reactions.push({
+                    emoji: emoji.native,
+                    count: 1,
+                    users: [user.id]
+                });
+            }
+            
+            // Update the message with new reactions
+            const updatedMessage = {
+                ...messageToUpdate,
+                reactions
+            };
+            
+            // Update the message in the store
+            addMessage({message: updatedMessage});
+        }
+    };
+
+    const handleEmojiClick = (evt: MouseEvent<HTMLDivElement>) => {
         evt.preventDefault();
         evt.stopPropagation();
-    }
+    };
 
     // Set the room messages
     useEffect(() => {
         // Init simpleBar scroll handler library
-        let elm = document.querySelectorAll('.js-scroll-to-end') as HTMLElement[];
+        const elm = document.querySelectorAll('.js-scroll-to-end');
         if(elm){
             elm.forEach(item => {
-                let simpleBody = new SimpleBar(item);
-                const height = item.querySelector('.simplebar-content > *').scrollHeight
-                simpleBody.getScrollElement().scrollTop = height;
+                const simpleBody = new SimpleBar(item as HTMLElement);
+                const scrollElement = simpleBody.getScrollElement();
+                if (scrollElement) {
+                    const height = (item.querySelector('.simplebar-content > *') as HTMLElement)?.scrollHeight || 0;
+                    scrollElement.scrollTop = height;
+                }
             });
         }
     }, [messages, isConnected, userMap]);
 
     return (
         <>
-            {messages.map((message: Message, idx) => {
-                const {text, sender} = message;
+            {messages.map((message: ExtendedMessage, idx) => {
+                const {text, sender, msgUri, reactions = []} = message;
                 const {fullname, thumb, userId} = sender || {};
                 const fromMe = userId === user.id;
                 const position = fromMe ? 'right' : 'left';
-                const title = fromMe ? '' : fullname;
-                const avatar = thumb && /^http/gi.test(thumb) ? thumb : Utils.thumbFromInitials({fullName: fullname});
+                const title = fromMe ? '' : (fullname || '');
+                const avatar = thumb && /^http/gi.test(thumb) ? thumb : Utils.thumbFromInitials({fullName: fullname || ''});
+                
+                // Ensure text is always a string
+                const messageText = text || '';
+                const messageId = msgUri || String(idx);
+                
                 return (
                     <div key={idx} className="tyn-reply-item outgoing">
-
                         <div className={`tyn-reply-group w-full`} style={{alignItems: `${!fromMe ? 'items-start' : ''}`}}>
                             <div className={`tyn-reply-bubble w-full flex-1 ${!fromMe ? 'flex-row justify-start self-start' : ''}`}>
                                 <div className={`flex w-full ${fromMe ? 'flex-row-reverse items-start justify-end' : 'flex items-start justify-start'}`}>
-                                    <Avatar src={avatar} type={'rounded'}/>
-                                    <MessageBox
-                                        position={position}
-                                        type={'text'}
-                                        text={<span dangerouslySetInnerHTML={{__html: Utils.parseEmojis(text)}}/>}
-                                        title={title}
-                                        data={{
-                                            uri: 'https://facebook.github.io/react/img/logo.svg',
-                                            status: {
-                                                click: false,
-                                                loading: 0,
-                                            },
-                                        }}
-                                    />
+                                    <Avatar src={avatar || ''} type={'rounded'}/>
+                                    <div className="relative">
+                                        <MessageBox
+                                            position={position}
+                                            type={'text'}
+                                            text={messageText}
+                                            title={title}
+                                            date={new Date()}
+                                            id={messageId}
+                                            focus={false}
+                                            titleColor="#000"
+                                            forwarded={false}
+                                            replyButton={false}
+                                            removeButton={false}
+                                            status="sent"
+                                            notch={false}
+                                            retracted={false}
+                                        />
+                                        {reactions.length > 0 && (
+                                            <div className={`absolute bottom-0 transform translate-y-full mt-1 flex gap-1 ${fromMe ? 'right-0' : 'left-0'}`}>
+                                                {reactions.map((reaction: MessageReaction, index: number) => (
+                                                    <div 
+                                                        key={index}
+                                                        className={`flex items-center bg-white rounded-full px-2 py-1 shadow-sm border ${reaction.users.includes(user.id) ? 'border-blue-400' : 'border-gray-200'}`}
+                                                    >
+                                                        <span className="text-sm">{reaction.emoji}</span>
+                                                        <span className="ml-1 text-xs text-gray-500">{reaction.count}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <ul className="tyn-reply-tools">
                                     <li className="dropup-center">
@@ -66,7 +157,7 @@ export const MessageList = ({userMap}) => {
                                             </svg>
                                         </button>
                                         <div className="dropdown-menu dropdown-menu-xxs" onClick={handleEmojiClick}>
-                                            <Picker data={data} onEmojiSelect={console.log} />
+                                            <Picker data={data} onEmojiSelect={(emoji: EmojiData) => handleEmojiSelect(emoji, msgUri)} />
                                         </div>
                                     </li>
                                     <li className="dropup-center">
@@ -107,8 +198,8 @@ export const MessageList = ({userMap}) => {
                             </div>
                         </div>
                     </div>
-                )
+                );
             })}
         </>
-    )
-}
+    );
+};

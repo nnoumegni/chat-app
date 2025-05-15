@@ -37,7 +37,7 @@ export const MainChatBox = () => {
                 <TopNav/>
                 <div className="tyn-content tyn-content-full-height tyn-chat has-aside-base">
                     <AsideLeft/>
-                    <div className={'tyn-main tyn-chat-content ' + asideActiveCls} id="tynMain">
+                    <div className={'tyn-main tyn-chat-content ' + asideActiveCls} id="tynMain" style={{overflow: 'visible'}}>
                         <ChatBox/>
                         <AsideRight/>
                     </div>

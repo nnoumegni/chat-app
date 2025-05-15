@@ -1,5 +1,34 @@
-!(function (TynApp) {
+!(function (global) {
     "use strict";
+    
+    // Use existing TynApp object or create a new one
+    var TynApp = global.TynApp || {};
+
+    // Add utility functions
+    TynApp.Load = function(fn) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fn);
+        } else {
+            fn();
+        }
+    };
+
+    TynApp.Resize = function(fn) {
+        window.addEventListener('resize', fn);
+    };
+
+    // Add required constants
+    TynApp.Body = document.body;
+    TynApp.Breakpoints = {
+        xl: 1200,
+        lg: 992,
+        md: 768,
+        sm: 576
+    };
+    TynApp.Page = {
+        Width: window.innerWidth,
+        Height: window.innerHeight
+    };
 
     TynApp.ActiveLink = function(selector, active){
       let elm = document.querySelectorAll(selector);
@@ -67,6 +96,7 @@
           }
         },
         send: function(){},
+      },
       item : function(){
         let elm = document.querySelectorAll('.js-toggle-main'); 
         if(elm){
@@ -170,7 +200,7 @@
               chatObserver.observe(TynApp.Body);
         }
       },
-      botsend:function(){
+      botsend: function(){
         let chatSend = document.querySelector('#tynBotSend');
         let chatInput = document.querySelector('#tynBotInput');
         let chatReply = document.querySelector('#tynBotReply');
@@ -206,6 +236,7 @@
       }
     }
 
+    // Define TynApp.Plugins first
     TynApp.Plugins = {
       lightbox : function(){
         const lightbox = GLightbox({
@@ -279,8 +310,30 @@
             }, 1000)
           });
         });
+      },
+      init: function(){
+        this.lightbox();
+        this.slider.stories();
+        this.clipboard();
       }
-    }
+    };
+
+    TynApp.Custom = {
+      init: function(){
+        TynApp.Chat.reply.search();
+        TynApp.Chat.reply.scroll();
+        TynApp.Chat.reply.input();
+        TynApp.Chat.reply.quick();
+        TynApp.Chat.reply.send();
+        TynApp.Chat.item();
+        TynApp.Chat.mute();
+        TynApp.Chat.aside();
+        TynApp.Chat.botsend();
+        TynApp.ActiveLink('.tyn-appbar-link', ['active', 'current-page']);
+        TynApp.Appbar();
+        TynApp.Theme();
+      }
+    };
 
     TynApp.Theme = function(){
       // Set Theme Function
@@ -302,36 +355,17 @@
       })
     }
 
-    TynApp.Custom.init = function(){
-      TynApp.Chat.reply.search();
-      TynApp.Chat.reply.scroll();
-      TynApp.Chat.reply.input();
-      TynApp.Chat.reply.quick();
-      TynApp.Chat.reply.send();
-      TynApp.Chat.item();
-      TynApp.Chat.mute();
-      TynApp.Chat.aside();
-      TynApp.Chat.botsend();
-      TynApp.ActiveLink('.tyn-appbar-link', ['active', 'current-page']);
-      TynApp.Appbar();
-      TynApp.Theme();
-    }
-
-    TynApp.Plugins.init = function(){
-      TynApp.Plugins.lightbox();
-      TynApp.Plugins.slider.stories();
-      TynApp.Plugins.clipboard();
-    }
-
     TynApp.init = function(){
-      TynApp.Load(TynApp.Custom.init);
-      TynApp.Load(TynApp.Plugins.init);
+      TynApp.Load(TynApp.Custom.init.bind(TynApp.Custom));
+      TynApp.Load(TynApp.Plugins.init.bind(TynApp.Plugins));
       TynApp.Resize(TynApp.Appbar);
     }
 
     TynApp.init();
 
-return TynApp;
-})(TynApp);
+    // Export TynApp to global scope
+    global.TynApp = TynApp;
+    return TynApp;
+})(window);
 
 //end-js

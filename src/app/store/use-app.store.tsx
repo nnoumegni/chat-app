@@ -4,7 +4,28 @@ import { create } from 'zustand';
 import {User, Message, Room, AddRoom, RoomUser, DmRoom} from '../models/chat-models';
 import {Utils} from "../helpers/utils";
 
-export const useAppStore = create((set) => ({
+interface AppState {
+  user: User | null;
+  socket: any; // Using any for socket since we don't have Socket.io types
+  isAuthenticated: boolean | undefined;
+  isConnected: boolean;
+  isConnecting: boolean;
+  messages: Message[];
+  rooms: (Room | AddRoom)[];  // Allow both Room and AddRoom types
+  selectedRoom: Room | null;
+  subscriptions: Record<string, Array<{callback: Function}>>;
+  showAside: boolean;
+  showMiniBox: boolean;
+  users: User[];
+  deviceId: string;
+  showNewRoomForm: boolean;
+  selectedUsers: RoomUser[];
+  roomType: string;
+  themeMode: string;
+  toggleVideoCall: boolean;
+}
+
+export const useAppStore = create<AppState>((set) => ({
   user: null,
   socket: null,
   isAuthenticated: undefined,
@@ -28,7 +49,7 @@ export const useAppStore = create((set) => ({
       user,
     };
   }),
-  setSocket: ({socket}) => set(() => {
+  setSocket: ({socket}: {socket: any}) => set(() => {
     return {
       socket,
     };
@@ -60,11 +81,24 @@ export const useAppStore = create((set) => ({
     };
   }),
   addMessage: ({message}: {message: Message}) => set((state: {messages: Message[]}) => {
+    // If the message has a msgUri, check if it exists and update it
+    if (message.msgUri) {
+      const existingMessageIndex = state.messages.findIndex(msg => msg.msgUri === message.msgUri);
+      if (existingMessageIndex !== -1) {
+        // Update existing message
+        const updatedMessages = [...state.messages];
+        updatedMessages[existingMessageIndex] = message;
+        return {
+          messages: updatedMessages,
+        };
+      }
+    }
+    // If it's a new message, prepend it
     return {
       messages: [message, ...state.messages],
     };
   }),
-  setRooms: ({rooms}: {rooms: Room[]}) => set(() => {
+  setRooms: ({rooms}: {rooms: (Room | AddRoom)[]}) => set(() => {
     return {
       rooms,
     };
@@ -74,14 +108,14 @@ export const useAppStore = create((set) => ({
       selectedRoom,
     };
   }),
-  addRoom: ({room}: {room: AddRoom}) => set((state: {rooms: AddRoom[]}) => {
+  addRoom: ({room}: {room: AddRoom | Room}) => set((state: AppState) => {
     const others = state.rooms.filter(r => r.roomUri !== room.roomUri);
     const rooms = [room, ...others];
     return {
       rooms,
     };
   }),
-  setSubscriptions: ({subscriptions}) => set((state) => {
+  setSubscriptions: ({subscriptions}: {subscriptions: AppState['subscriptions']}) => set(() => {
     return {
       subscriptions,
     };
@@ -111,7 +145,7 @@ export const useAppStore = create((set) => ({
       showNewRoomForm,
     };
   }),
-  addSelectedUser: ({user}: {user: RoomUser | DmRoom}) => set((state: {selectedUsers: RoomUser[]}) => {
+  addSelectedUser: ({user}: {user: RoomUser}) => set((state: AppState) => {
     return {
       selectedUsers: [...state.selectedUsers, user],
     };
@@ -126,7 +160,7 @@ export const useAppStore = create((set) => ({
       themeMode,
     };
   }),
-  setToggleVideoCall: (toggleVideoCall) => set(() => {
+  setToggleVideoCall: (toggleVideoCall: boolean) => set(() => {
     return {
       toggleVideoCall,
     };

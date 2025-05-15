@@ -37,7 +37,7 @@ export const AsideLeft = () => {
         }
     }
 
-    const handleRoomClick = ({evt, room}: {evt: any; room: Room}) => {
+    const handleRoomClick = ({evt, room}: {evt: React.MouseEvent; room: Room}) => {
         const {roomUri, uri} = room;
         setUnreadMessageCount({roomUri: (roomUri || uri), count: 0});
         setSelectedRoom({room: room as Room});
@@ -103,7 +103,8 @@ export const AsideLeft = () => {
                                         className="form-control form-control-solid"
                                         id="search"
                                         placeholder="Search account / chat"
-                                        onKeyUp={handleListFilter}
+                                        onChange={handleListFilter}
+                                        defaultValue=""
                                     />
                                 </div>
                             </div>
@@ -124,7 +125,7 @@ export const AsideLeft = () => {
                                         }
 
                                         return (
-                                            <li key={idx} className={'tyn-aside-item js-toggle-main ' + activeCls} onClick={(evt: MouseEvent) => handleRoomClick({evt, room})}>
+                                            <li key={idx} className={'tyn-aside-item js-toggle-main ' + activeCls} onClick={(evt: React.MouseEvent) => handleRoomClick({evt, room})}>
                                                     <div className="tyn-media-group">
                                                         <ChatItem
                                                             avatar={avatar}

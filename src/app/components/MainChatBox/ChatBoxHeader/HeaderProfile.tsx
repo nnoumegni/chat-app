@@ -128,7 +128,8 @@ export const HeaderProfile = () => {
                                     id="searchInThisChat"
                                     placeholder="Search in this chat"
                                     ref={filterInputRef}
-                                    onKeyUp={handleFilterMessage}
+                                    onChange={handleFilterMessage}
+                                    defaultValue=""
                                 />
                             </div>
                         </div>

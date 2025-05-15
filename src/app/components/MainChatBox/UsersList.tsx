@@ -40,7 +40,7 @@ export const UsersList = ({isModal = false, handleRoomClick}) => {
     const handleUserClicked = useCallback(({user: dmUser}: {user: RoomUser}) => {
         const roomUser: DmRoom = Utils.roomUserMapper({user: dmUser, currentUser: user});
         if(roomType === 'dm') {
-            handleRoomClick({room: roomUser});
+            handleRoomClick({evt: null, room: roomUser});
             setShowNewRoomForm({showNewRoomForm: false});
         } else if(roomType === 'group') {
             addSelectedUser({user: roomUser})
