@@ -5,6 +5,7 @@ import {BACKEND_URL, CHAT_EVENT_NAME, CHAT_ROOM_JOIN_EVENT_NAME} from "../consta
 import {UseSocketIo} from "../hooks/use-socket-io";
 import {MainChatBox} from "../components/MainChatBox";
 import 'react-chat-elements/dist/main.css';
+import {FileUpload} from "../components/FileUpload/FileUpload";
 
 export const AuthLayout = () => {
     const {user, setSocket, isConnected, deviceId, setThemeMode} = useAppStore();

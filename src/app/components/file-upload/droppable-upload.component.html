@@ -1,0 +1,145 @@
+<div *ngIf="isCustomForm" class="custom-upload-container">
+  <input [hidden]="true" type="file" id="file_upload" name="file_upload" (change)="onCustomSubmit($event)" multiple #fileInput>
+  <ng-content></ng-content>
+</div>
+<div *ngIf="isCustomForm && false">
+  <form [formGroup]="form" #ngForm>
+    <div class="form-group">
+      <div class="custom_file_upload" (click)="form.reset()">
+        <input type="hidden" formControlName="name" [value]="fileInput.value">
+        <div class="file_upload">
+          <input id="customFileInput" type="file" name="file_upload" (change)="onCustomSubmit($event)" multiple #fileInput>
+          <div *ngIf="progress" id="customUploadProgress">
+            <div id="customUploadProgressVal">
+              <span *ngIf="progress < 100">{{ progress }}%</span>
+              <span *ngIf="progress === 100 && !done"><i class="fa fa-spinner"></i></span>
+              <span *ngIf="progress === 100 && done"><i class="fa fa-check"></i> Done</span>
+            </div>
+            <div id="customUploadProgressBar" [ngStyle]="{'width': progress + '%'}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<label
+  *ngIf="!isCustomForm"
+  (click)="showUploadForm = true"
+  for="uploadFile1"
+       class="flex bg-gray-800 hover:bg-gray-700 text-white text-base px-5 py-3 outline-none rounded w-max cursor-pointer mx-auto font-[sans-serif]">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 mr-2 fill-white inline" viewBox="0 0 32 32">
+    <path
+      d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z"
+      data-original="#000000" />
+    <path
+      d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z"
+      data-original="#000000" />
+  </svg>
+  Upload
+  <input *ngIf="false" type="file" id='uploadFile1' class="hidden" />
+</label>
+
+<div [formGroup]="form" *ngIf="showUploadForm"
+  class="fixed inset-0 p-4 flex flex-wrap justify-center items-center w-full h-full z-[10000] before:fixed before:inset-0 before:w-full before:h-full before:bg-[rgba(0,0,0,0.5)] overflow-auto font-[sans-serif]">
+  <div class="w-full max-w-lg bg-white shadow-lg rounded-lg p-6 relative">
+    <div class="flex items-center pb-3 border-b border-gray-200">
+      <div class="flex-1">
+        <h3 *ngIf="files?.length === 0" class="text-gray-800 text-xl font-bold">{{ headerTitle }}</h3>
+        <h3 *ngIf="files?.length !== 0" class="text-gray-800 text-xl font-bold">{{ files?.length }} File selected</h3>
+        <p class="text-gray-600 text-xs mt-1">{{ headerSubTitle }}</p>
+      </div>
+
+      <svg (click)="showUploadForm = false" xmlns="http://www.w3.org/2000/svg" class="w-3 ml-2 cursor-pointer shrink-0 fill-gray-400 hover:fill-red-500"
+           viewBox="0 0 320.591 320.591">
+        <path
+          d="M30.391 318.583a30.37 30.37 0 0 1-21.56-7.288c-11.774-11.844-11.774-30.973 0-42.817L266.643 10.665c12.246-11.459 31.462-10.822 42.921 1.424 10.362 11.074 10.966 28.095 1.414 39.875L51.647 311.295a30.366 30.366 0 0 1-21.256 7.288z"
+          data-original="#000000"></path>
+        <path
+          d="M287.9 318.583a30.37 30.37 0 0 1-21.257-8.806L8.83 51.963C-2.078 39.225-.595 20.055 12.143 9.146c11.369-9.736 28.136-9.736 39.504 0l259.331 257.813c12.243 11.462 12.876 30.679 1.414 42.922-.456.487-.927.958-1.414 1.414a30.368 30.368 0 0 1-23.078 7.288z"
+          data-original="#000000"></path>
+      </svg>
+    </div>
+    <div formArrayName="files" style="max-height: 400px; overflow-y: auto">
+      <div class="rounded border-2 border-gray-200 border-dashed mt-6">
+        <div
+          appDroppable
+          class="p-4 min-h-[180px] flex flex-col items-center justify-center text-center cursor-pointer"
+          (dropAction)="onFileDropped($event)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 mb-4 fill-gray-600 inline-block" viewBox="0 0 32 32">
+            <path
+              d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z"
+              data-original="#000000" />
+            <path
+              d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z"
+              data-original="#000000" />
+          </svg>
+
+          <h4 class="text-sm text-gray-600">Drag & Drop or <label for="chooseFile" class="text-blue-600 cursor-pointer">Choose file</label> to upload</h4>
+          <input *ngIf="showCustomFileInput" type="file" id="chooseFile" class="hidden" (change)="onFileChange($event)" multiple />
+        </div>
+      </div>
+
+      <div *ngFor="let item of files.controls.reverse(); let i = index;" [formGroupName]="i" class="flex flex-col bg-gray-50 p-4 rounded-lg mt-4">
+        <div class="flex">
+          <p *ngIf="false" class="text-xs text-gray-600 flex-1 flex items-center justify-start">
+            <i class="fa mr-2 fill-current inline-block" style="font-size: 1.5em;" [ngClass]="getFileInfo(i).faCls"></i>
+            <span class="mr-2">{{ formatFileSize(item.get('size').value) }}</span>
+            <span style="display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+            >{{ item.get('name').value }}</span>
+          </p>
+          <div class="relative sm:col-span-2 flex-1">
+            <div class="relative flex items-center text-xs text-gray-600 flex-1 flex items-center justify-start">
+              <i class="fa mr-2 fill-current inline-block" style="font-size: 1.5em;" [ngClass]="getFileInfo(i).faCls"></i>
+              <span class="mr-2 whitespace-nowrap">{{ formatFileSize(item.get('size').value) }}</span>
+              <input type="text" formControlName="name" placeholder="{{ getFileInfo(i).title }}" class="px-0 py-0 mr-2 bg-transparent text-black w-full text-sm border-b-2 focus:border-[#007bff] outline-none" [ngClass]="{'border-red-500': !getFileInfo(i).isValid}" />
+            </div>
+          </div>
+          <svg (click)="files.removeAt(i)" xmlns="http://www.w3.org/2000/svg" class="w-3 cursor-pointer shrink-0 fill-gray-400 hover:fill-red-500"
+               viewBox="0 0 320.591 320.591">
+            <path
+              d="M30.391 318.583a30.37 30.37 0 0 1-21.56-7.288c-11.774-11.844-11.774-30.973 0-42.817L266.643 10.665c12.246-11.459 31.462-10.822 42.921 1.424 10.362 11.074 10.966 28.095 1.414 39.875L51.647 311.295a30.366 30.366 0 0 1-21.256 7.288z"
+              data-original="#000000"></path>
+            <path
+              d="M287.9 318.583a30.37 30.37 0 0 1-21.257-8.806L8.83 51.963C-2.078 39.225-.595 20.055 12.143 9.146c11.369-9.736 28.136-9.736 39.504 0l259.331 257.813c12.243 11.462 12.876 30.679 1.414 42.922-.456.487-.927.958-1.414 1.414a30.368 30.368 0 0 1-23.078 7.288z"
+              data-original="#000000"></path>
+          </svg>
+        </div>
+
+        <div class="bg-gray-300 rounded-full w-full h-2 my-2">
+          <div class="h-full rounded-full bg-blue-600 flex items-center relative" [ngStyle]="{width: (progressInfo[i] || 0) + '%'}">
+            <span class="absolute text-xs right-0 bg-white w-2 h-2 rounded-full"></span>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-600 flex-1">{{ (progressInfo[i] || 0) }}% done</p>
+      </div>
+    </div>
+    <div class="border-t border-gray-200 pt-6 flex justify-between gap-4 mt-6">
+      <button
+        (click)="closeUploadModal()"
+        type="button"
+        class="w-full px-4 py-2 rounded-lg text-gray-800 text-sm border-none outline-none tracking-wide bg-gray-200 hover:bg-gray-300 active:bg-gray-200"
+      >Cancel</button>
+      <button
+        *ngIf="!loading"
+        type="button"
+        class="w-full px-4 py-2 rounded-lg text-white text-sm border-none outline-none tracking-wide bg-blue-600 hover:bg-blue-700 active:bg-blue-600"
+        (click)="onSubmit($event)"
+      >Upload</button>
+      <button
+        *ngIf="loading"
+        type="button"
+        class="w-full px-4 py-2 rounded-lg text-white text-sm flex items-center justify-center tracking-wider font-semibold font-medium border border-current outline-none bg-gray-400 disabled:cursor-not-allowed" disabled>
+        In progress
+        <svg xmlns="http://www.w3.org/2000/svg" width="18px" fill="#fff" class="ml-2 inline animate-spin"
+             viewBox="0 0 24 24">
+          <path
+            d="M12 22c5.421 0 10-4.579 10-10h-2c0 4.337-3.663 8-8 8s-8-3.663-8-8c0-4.336 3.663-8 8-8V2C6.579 2 2 6.58 2 12c0 5.421 4.579 10 10 10z"
+            data-original="#000000" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>

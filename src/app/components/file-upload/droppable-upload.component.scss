@@ -1,0 +1,131 @@
+app-droppable-upload {
+  @import "tailwind";
+
+  cursor: default;
+
+  .mediaUploadMedia {
+
+    form {
+      display: table;
+      margin: 1em auto;
+      width: 241px;
+    }
+
+    bdc-neo-in-button .custom_file_upload_buttons button.NeoInButton {
+      margin-left: 0 !important;
+    }
+
+    input.file {
+      width: 150px;
+      height: 20px;
+      border: 1px solid #BBB;
+      border-right: 0;
+      color: #888;
+      padding: 5px;
+
+      -webkit-border-top-left-radius: 5px;
+      -webkit-border-bottom-left-radius: 5px;
+      -moz-border-radius-topleft: 5px;
+      -moz-border-radius-bottomleft: 5px;
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+
+      outline: none;
+    }
+
+    div.file_upload {
+      width: 80px;
+      height: 24px;
+      background: brown;
+      background: -moz-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #7abcff), color-stop(44%, #60abf8), color-stop(100%, #4096ee));
+      background: -webkit-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+      background: -o-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+      background: -ms-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+      background: linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#7abcff', endColorstr='#4096ee', GradientType=0);
+
+      display: inline;
+      position: absolute;
+      overflow: hidden;
+      cursor: pointer;
+
+      -webkit-border-top-right-radius: 5px;
+      -webkit-border-bottom-right-radius: 5px;
+      -moz-border-radius-topright: 5px;
+      -moz-border-radius-bottomright: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+
+      font-weight: bold;
+      color: #FFF;
+      text-align: center;
+      padding-top: 8px;
+    }
+
+    div.file_upload:before {
+      content: 'BROWSE';
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+
+      cursor: pointer;
+    }
+
+    div.file_upload input {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      display: inline;
+      cursor: pointer;
+      opacity: 0;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+    }
+  }
+
+  .drag-over {
+    border: dashed 2px #0d6efd !important;
+  }
+
+  #customFileInput, #customUploadProgress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+  }
+
+  #customFileInput {
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  #customUploadProgress {
+    background: white;
+    color: black;
+    position: absolute;
+
+    #customUploadProgressBar, #customUploadProgressVal {
+      height: 100%;
+      text-align: center;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    #customUploadProgressBar {
+      background: #5a6268;
+    }
+
+    #customUploadProgressVal {
+      width: 100%;
+      background: transparent;
+      z-index: 10;
+    }
+  }
+}
+
